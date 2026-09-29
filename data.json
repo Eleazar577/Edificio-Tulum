@@ -1,0 +1,148 @@
+{
+  "buildingName": "Edificio Tulum - Colonia Petrolera",
+  "defaultFee": 250,
+  "providers": [
+    {
+      "id": "prov-1790695888728",
+      "category": "Agua",
+      "name": "Pipa de Agua",
+      "phone": "9381040517",
+      "notes": ""
+    },
+    {
+      "id": "prov-1790696154062",
+      "category": "Poda y Jardinería",
+      "name": "Señor Armando Jardineria",
+      "phone": "9381810058",
+      "notes": "Servicio de Jardinería"
+    }
+  ],
+  "departments": [
+    {
+      "id": "Departamento 1",
+      "owner": "Lic. Diego",
+      "phone": "9381150399"
+    },
+    {
+      "id": "Departamento 2",
+      "owner": "Alanis71k",
+      "phone": "9381375040"
+    },
+    {
+      "id": "Departamento 3",
+      "owner": "Arq. Margarita",
+      "phone": "9381522412"
+    },
+    {
+      "id": "Departamento 4",
+      "owner": "Ing. Jaime",
+      "phone": "9381720233"
+    },
+    {
+      "id": "Departamento 5",
+      "owner": "Ing. Elio",
+      "phone": "8991225053"
+    },
+    {
+      "id": "Departamento 6",
+      "owner": "Lic. Isis Elizabeth",
+      "phone": "2282521819"
+    },
+    {
+      "id": "Departamento 7",
+      "owner": "Ing. Miguel",
+      "phone": "9381007717"
+    },
+    {
+      "id": "Departamento 8",
+      "owner": "Alejandra",
+      "phone": "5535607309"
+    },
+    {
+      "id": "Departamento 10",
+      "owner": "Ing. Nicteha",
+      "phone": "9381262842"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx-1790696965661",
+      "type": "EXPENSE",
+      "amount": 2100,
+      "date": "2026-09-29",
+      "notes": "Pipa Edificio Tulum",
+      "category": "Agua",
+      "provider": "Pipa de Agua"
+    },
+    {
+      "id": "tx-1790696937711",
+      "type": "INCOME",
+      "amount": 350,
+      "date": "2026-09-29",
+      "notes": "Pipa 20k",
+      "department": "Departamento 10",
+      "resident": "Ing. Nicteha",
+      "category": "Cuota Ordinaria"
+    },
+    {
+      "id": "tx-1790696910708",
+      "type": "INCOME",
+      "amount": 350,
+      "date": "2026-09-29",
+      "notes": "Pipa 20k",
+      "department": "Departamento 7",
+      "resident": "Ing. Miguel",
+      "category": "Cuota Ordinaria"
+    },
+    {
+      "id": "tx-1790696897293",
+      "type": "INCOME",
+      "amount": 350,
+      "date": "2026-09-29",
+      "notes": "Pipa 20k",
+      "department": "Departamento 6",
+      "resident": "Lic. Isis Elizabeth",
+      "category": "Cuota Ordinaria"
+    },
+    {
+      "id": "tx-1790696880680",
+      "type": "INCOME",
+      "amount": 350,
+      "date": "2026-09-29",
+      "notes": "Pipa 20k",
+      "department": "Departamento 5",
+      "resident": "Ing. Elio",
+      "category": "Cuota Ordinaria"
+    },
+    {
+      "id": "tx-1790696856401",
+      "type": "INCOME",
+      "amount": 350,
+      "date": "2026-09-29",
+      "notes": "Pipa 20k",
+      "department": "Departamento 3",
+      "resident": "Arq. Margarita",
+      "category": "Cuota Ordinaria"
+    },
+    {
+      "id": "tx-1790696834040",
+      "type": "INCOME",
+      "amount": 350,
+      "date": "2026-09-29",
+      "notes": "Pipa 20k",
+      "department": "Departamento 2",
+      "resident": "Alanis71k",
+      "category": "Cuota Ordinaria"
+    },
+    {
+      "id": "tx-1790696803177",
+      "type": "INCOME",
+      "amount": 350,
+      "date": "2026-09-29",
+      "notes": "Pipa 20k",
+      "department": "Departamento 1",
+      "resident": "Lic. Diego",
+      "category": "Cuota Ordinaria"
+    }
+  ]
+}
