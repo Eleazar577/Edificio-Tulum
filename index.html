@@ -30,18 +30,22 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 id="header-bldg-name" class="font-bold text-lg leading-tight truncate max-w-[180px] sm:max-w-xs">Mi Edificio</h1>
+            <h1 id="header-bldg-name" class="font-bold text-lg leading-tight truncate max-w-[170px] sm:max-w-xs">Mi Edificio</h1>
             <button onclick="navTo('settings')" title="Editar nombre" class="text-slate-400 hover:text-white transition">
               <i data-lucide="pencil" class="w-4 h-4"></i>
             </button>
           </div>
           <p class="text-xs text-slate-400 flex items-center gap-1.5">
             <span id="sync-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="sync-status-text">GitHub Sincronizado</span>
+            <span id="sync-status-text">Conectando...</span>
           </p>
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <button onclick="copyMagicLink()" title="Copiar enlace para vecinos" class="p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition shadow flex items-center gap-1 text-xs font-semibold">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Invitar Vecinos</span>
+        </button>
         <button onclick="syncDataFromGitHub()" title="Refrescar datos" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition">
           <i data-lucide="refresh-cw" class="w-4 h-4"></i>
         </button>
@@ -53,14 +57,14 @@
     </div>
   </header>
 
-  <!-- Banner de configuración si falta el Token de GitHub -->
+  <!-- Banner informativo si no hay configuración -->
   <div id="github-setup-banner" class="max-w-4xl mx-auto px-4 pt-3 hidden">
     <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
       <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
       <div class="text-xs text-amber-900 space-y-1">
-        <strong class="font-bold text-sm block">Conecta tu repositorio de GitHub</strong>
-        <p>Para que los datos se guarden en tu GitHub y todos los vecinos los vean, configura tu Usuario, Repositorio y Token.</p>
-        <button onclick="navTo('settings')" class="underline font-bold text-indigo-700 mt-1 inline-block">Configurar ahora en Ajustes &rarr;</button>
+        <strong class="font-bold text-sm block">Aplicación sin conectar</strong>
+        <p>Configura tu usuario, repositorio y token en la pestaña Ajustes, o abre el Enlace Mágico que te envió el administrador.</p>
+        <button onclick="navTo('settings')" class="underline font-bold text-indigo-700 mt-1 inline-block">Abrir Ajustes &rarr;</button>
       </div>
     </div>
   </div>
@@ -86,7 +90,7 @@
             <i data-lucide="arrow-down-left" class="w-4 h-4 text-indigo-600"></i>
           </div>
           <h2 id="total-income" class="text-2xl font-black text-indigo-600">$0.00</h2>
-          <span id="income-count" class="text-[11px] text-slate-400">0 cuotas cobradas</span>
+          <span id="income-count" class="text-[11px] text-slate-400">0 cuotas</span>
         </div>
 
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
@@ -95,8 +99,19 @@
             <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-600"></i>
           </div>
           <h2 id="total-expense" class="text-2xl font-black text-rose-600">$0.00</h2>
-          <span id="expense-count" class="text-[11px] text-slate-400">0 servicios pagados</span>
+          <span id="expense-count" class="text-[11px] text-slate-400">0 pagos</span>
         </div>
+      </div>
+
+      <!-- Tarjeta Compartir Rápido -->
+      <div class="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-sm">¿Invitar a otros vecinos?</h3>
+          <p class="text-xs text-slate-300">Genera un enlace para que entren y editen sin configurar nada.</p>
+        </div>
+        <button onclick="copyMagicLink()" class="bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5 flex-shrink-0">
+          <i data-lucide="link" class="w-4 h-4"></i> Copiar Enlace
+        </button>
       </div>
 
       <!-- Gráfica y Estado Mensual -->
@@ -139,18 +154,18 @@
         </div>
       </div>
 
-      <!-- Contacto Rápido: Pipas de Agua y Poda -->
+      <!-- Contacto Rápido: Pipas y Poda -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex justify-between items-center mb-3">
           <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-            <i data-lucide="phone-call" class="w-4 h-4 text-indigo-600"></i> Contacto Rápido de Servicios
+            <i data-lucide="phone-call" class="w-4 h-4 text-indigo-600"></i> Directorio Rápido de Servicios
           </h3>
           <button onclick="navTo('providers')" class="text-xs text-indigo-600 font-semibold hover:underline">Ver Directorio</button>
         </div>
         <div id="quick-providers-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
       </div>
 
-      <!-- Últimos Movimientos -->
+      <!-- Movimientos Recientes -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex justify-between items-center">
           <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
@@ -199,7 +214,7 @@
             <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
               <i data-lucide="contact" class="w-5 h-5 text-indigo-600"></i> Directorio de Servicios
             </h2>
-            <p class="text-xs text-slate-500">Contactos directos de pipas, poda y mantenimiento.</p>
+            <p class="text-xs text-slate-500">Pipas de agua, poda de árboles y mantenimiento.</p>
           </div>
           <button onclick="openModal('modal-provider')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1 shadow transition">
             <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Proveedor
@@ -210,37 +225,49 @@
       </div>
     </section>
 
-    <!-- VISTA 4: AJUSTES Y GITHUB SYNC -->
+    <!-- VISTA 4: AJUSTES -->
     <section id="view-settings" class="hidden space-y-4">
-      <!-- Configuración de Conexión GitHub -->
+      <!-- Enlace Mágico -->
+      <div class="bg-indigo-50 border border-indigo-200 p-5 rounded-2xl shadow-sm space-y-3">
+        <div class="flex items-center gap-2 text-indigo-950 font-bold text-sm">
+          <i data-lucide="wand-2" class="w-5 h-5 text-indigo-600"></i>
+          <span>Enlace Mágico para Compartir</span>
+        </div>
+        <p class="text-xs text-indigo-800 leading-relaxed">
+          Copia este enlace y pégalo en el grupo de WhatsApp de los vecinos. Al hacer clic, su teléfono se configurará automáticamente sin pedirles claves ni configuraciones.
+        </p>
+        <button onclick="copyMagicLink()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow transition">
+          <i data-lucide="copy" class="w-4 h-4"></i> Copiar Enlace Mágico
+        </button>
+      </div>
+
+      <!-- Configuración GitHub -->
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
         <div class="border-b border-slate-100 pb-3">
           <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
-            <i data-lucide="github" class="w-5 h-5 text-slate-900"></i> Conexión a GitHub (Base de Datos)
+            <i data-lucide="github" class="w-5 h-5 text-slate-900"></i> Conexión GitHub
           </h2>
-          <p class="text-xs text-slate-500">Permite sincronizar las cuentas para que todos los vecinos vean y editen la misma información.</p>
+          <p class="text-xs text-slate-500">Datos del repositorio donde se guardan las cuentas.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario de GitHub</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario GitHub</label>
             <input type="text" id="gh-owner" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="TuUsuario" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Repositorio</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Repositorio</label>
             <input type="text" id="gh-repo" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="control-edificio" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Token de Acceso Personal</label>
-            <input type="password" id="gh-token" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none font-mono" placeholder="ghp_xxxx..." />
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Token de Acceso</label>
+            <input type="password" id="gh-token" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none font-mono" placeholder="ghp_xxxx" />
           </div>
         </div>
 
-        <div class="flex gap-2">
-          <button onclick="saveGitHubConfig()" class="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow transition">
-            <i data-lucide="save" class="w-4 h-4"></i> Guardar Conexión y Sincronizar
-          </button>
-        </div>
+        <button onclick="saveGitHubConfig()" class="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow transition">
+          <i data-lucide="save" class="w-4 h-4"></i> Guardar y Sincronizar
+        </button>
       </div>
 
       <!-- Datos del Condominio -->
@@ -249,7 +276,7 @@
           <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
             <i data-lucide="building" class="w-5 h-5 text-indigo-600"></i> Datos del Edificio
           </h2>
-          <p class="text-xs text-slate-500">Personaliza el nombre y cuota ordinaria base.</p>
+          <p class="text-xs text-slate-500">Personaliza el nombre y cuota mensual sugerida.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -348,7 +375,7 @@
             <select id="tx-category" onchange="autoFilterProviderOptions()" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
               <option value="Agua">Agua Potable / Pipas</option>
               <option value="Poda y Jardinería">Poda y Jardinería</option>
-              <option value="Mantenimiento General">Mantenimiento y Reparación</option>
+              <option value="Mantenimiento General">Mantenimiento y Bombas</option>
               <option value="Luz Áreas Comunes">Luz CFE</option>
               <option value="Limpieza">Insumos de Limpieza</option>
               <option value="Otros">Otro Gasto</option>
@@ -374,7 +401,7 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Detalle / Notas</label>
-          <input type="text" id="tx-notes" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="Ej. Pipa de 10,000L o Cuota de mantenimiento" />
+          <input type="text" id="tx-notes" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="Ej. Pipa de 10,000L cisterna norte" />
         </div>
 
         <button type="submit" id="btn-save-tx" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold py-3 rounded-xl shadow-lg transition mt-2 flex items-center justify-center gap-2">
@@ -388,7 +415,7 @@
   <div id="modal-provider" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 class="font-bold text-base text-slate-900">Agregar Proveedor de Servicio</h3>
+        <h3 class="font-bold text-base text-slate-900">Agregar Proveedor</h3>
         <button onclick="closeModal('modal-provider')" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
@@ -480,15 +507,14 @@
     </div>
   </div>
 
-  <!-- LÓGICA DE GITHUB Y SINCRONIZACIÓN -->
+  <!-- SCRIPT CON DETECCIÓN DE ENLACE MÁGICO -->
   <script>
-    // Configuración por defecto
     const DEFAULT_DATA = {
       buildingName: "Privada Las Palmas",
       defaultFee: 500,
       providers: [
         { id: "prov-1", name: "Pipas San Jerónimo (Don Mario)", category: "Agua", phone: "9381234567", notes: "Pipa de 10,000L ($850 MXN)" },
-        { id: "prov-2", name: "Jardinería y Poda El Roble", category: "Poda y Jardinería", phone: "9387654321", notes: "Poda integral y retiro de ramas ($600 MXN)" }
+        { id: "prov-2", name: "Jardinería y Poda El Roble", category: "Poda y Jardinería", phone: "9387654321", notes: "Poda integral y retiro de follaje ($600 MXN)" }
       ],
       departments: [
         { id: "Depto 101", owner: "Carlos Ramírez", phone: "" },
@@ -506,15 +532,72 @@
     let currentFileSha = null;
     let expenseChartInstance = null;
 
+    // --- PROCESAR ENLACE MÁGICO (SI VIENE EN LA URL) ---
+    function checkMagicUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const urlToken = params.get("token");
+      const urlOwner = params.get("owner");
+      const urlRepo = params.get("repo");
+
+      // Si la URL contiene credenciales mágicas:
+      if (urlToken || urlOwner || urlRepo) {
+        // Si no vienen owner/repo, intenta detectarlos del dominio github.io (ej. usuario.github.io/repo/)
+        let detectedOwner = urlOwner || ghConfig.owner;
+        let detectedRepo = urlRepo || ghConfig.repo;
+
+        if (!detectedOwner && window.location.hostname.endsWith("github.io")) {
+          detectedOwner = window.location.hostname.split(".")[0];
+          const pathParts = window.location.pathname.split("/").filter(Boolean);
+          if (pathParts.length > 0) detectedRepo = pathParts[0];
+        }
+
+        ghConfig = {
+          owner: detectedOwner || "",
+          repo: detectedRepo || "",
+          token: urlToken || ghConfig.token || ""
+        };
+
+        localStorage.setItem("vecinos_gh_config", JSON.stringify(ghConfig));
+
+        // Limpiar la URL del navegador para no dejar el token a la vista
+        window.history.replaceState({}, document.title, window.location.pathname);
+        alert("✨ ¡Enlace Mágico activado! Ya estás conectado al edificio.");
+      }
+    }
+
+    // Generar y Copiar el Enlace Mágico
+    function copyMagicLink() {
+      if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) {
+        alert("Primero guarda tu conexión en Ajustes para poder generar el enlace mágico.");
+        navTo("settings");
+        return;
+      }
+
+      // Base URL actual limpia
+      const baseUrl = window.location.origin + window.location.pathname;
+      const magicUrl = `${baseUrl}?owner=${encodeURIComponent(ghConfig.owner)}&repo=${encodeURIComponent(ghConfig.repo)}&token=${encodeURIComponent(ghConfig.token)}`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(magicUrl).then(() => {
+          alert("✨ ¡Enlace Mágico copiado al portapapeles!\n\nPégalo en el grupo de WhatsApp del edificio. Cualquier vecino que lo abra se conectará al instante.");
+        });
+      } else {
+        prompt("Copia este enlace mágico y compártelo:", magicUrl);
+      }
+    }
+
     // --- SINCRONIZACIÓN CON GITHUB API ---
     async function syncDataFromGitHub() {
       if (!ghConfig.owner || !ghConfig.repo) {
         document.getElementById("github-setup-banner").classList.remove("hidden");
+        setSyncStatus("Sin conectar", "bg-slate-400");
         updateUI();
         return;
       }
 
+      document.getElementById("github-setup-banner").classList.add("hidden");
       setSyncStatus("Sincronizando...", "bg-amber-400");
+
       const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/data.json`;
       const headers = { "Accept": "application/vnd.github+json" };
       if (ghConfig.token) headers["Authorization"] = `Bearer ${ghConfig.token}`;
@@ -529,7 +612,6 @@
           localStorage.setItem("vecinos_app_data", JSON.stringify(appData));
           setSyncStatus("GitHub Sincronizado", "bg-emerald-400");
         } else if (res.status === 404 && ghConfig.token) {
-          // El archivo data.json no existe aún, lo creamos
           await pushDataToGitHub("Inicializar base de datos de vecinos");
         }
       } catch (err) {
@@ -588,7 +670,6 @@
       dot.className = `w-2 h-2 rounded-full ${dotClass}`;
     }
 
-    // --- CONFIGURACIÓN GITHUB ---
     function saveGitHubConfig() {
       const owner = document.getElementById("gh-owner").value.trim();
       const repo = document.getElementById("gh-repo").value.trim();
@@ -601,8 +682,7 @@
 
       ghConfig = { owner, repo, token };
       localStorage.setItem("vecinos_gh_config", JSON.stringify(ghConfig));
-      document.getElementById("github-setup-banner").classList.add("hidden");
-      alert("Configuración de GitHub guardada. Sincronizando...");
+      alert("Configuración de GitHub guardada.");
       syncDataFromGitHub();
     }
 
@@ -995,8 +1075,8 @@
       document.getElementById("total-balance").innerText = `$${balance.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
       document.getElementById("total-income").innerText = `$${income.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
       document.getElementById("total-expense").innerText = `$${expense.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
-      document.getElementById("income-count").innerText = `${incomeCount} cuotas registradas`;
-      document.getElementById("expense-count").innerText = `${expenseCount} pagos de servicios`;
+      document.getElementById("income-count").innerText = `${incomeCount} cuotas`;
+      document.getElementById("expense-count").innerText = `${expenseCount} pagos`;
 
       const totalDepts = appData.departments.length;
       const paidCount = paidDeptsThisMonth.size;
@@ -1070,7 +1150,7 @@
     async function deleteTransaction(id) {
       if (confirm("¿Deseas eliminar este registro?")) {
         appData.transactions = appData.transactions.filter(t => t.id !== id);
-        await pushDataToGitHub("Eliminar transacción contable");
+        await pushDataToGitHub("Eliminar transacción");
         renderTransactions();
       }
     }
@@ -1130,10 +1210,11 @@
       link.click();
     }
 
-    // Inicialización y auto-recarga cada 30 segundos
+    // Inicialización automática
     document.addEventListener("DOMContentLoaded", () => {
+      checkMagicUrl();
       syncDataFromGitHub();
-      setInterval(syncDataFromGitHub, 30000); // Mantiene sincronizados a los vecinos cada 30 segundos automáticamente
+      setInterval(syncDataFromGitHub, 30000); // Refresco automático cada 30 segundos
     });
   </script>
 </body>
