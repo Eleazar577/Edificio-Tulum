@@ -3,62 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MiEdificio Colaborativo - Control en Tiempo Real</title>
-
-  <!-- PWA & Mobile Web App Settings -->
+  <title>Control Vecinal - Edificio</title>
+  
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="MiEdificio" />
   <meta name="theme-color" content="#0f172a" />
-  <link rel="manifest" href='data:application/manifest+json;utf-8,%7B%22name%22%3A%22MiEdificio%20Colaborativo%22%2C%22short_name%22%3A%22MiEdificio%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230f172a%22%7D' />
-
-  <!-- Tailwind CSS CDN -->
+  
+  <!-- Tailwind CSS, Lucide & Chart.js -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Chart.js for data visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    @media print {
-      .no-print { display: none !important; }
-      body { background: white !important; color: black !important; }
-    }
   </style>
 </head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-24 md:pb-6 select-none">
 
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col pb-24 md:pb-6 select-none">
-
+  <!-- Header Superior -->
   <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-sky-600 rounded-2xl shadow-inner flex items-center justify-center">
+        <div class="p-2 bg-indigo-600 rounded-xl shadow-inner">
           <i data-lucide="building-2" class="w-6 h-6 text-white"></i>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 id="headerBldgName" class="font-bold text-base sm:text-lg leading-tight truncate max-w-[180px] sm:max-w-xs">Cargando edificio...</h1>
-            <button onclick="navTo('settings')" title="Editar datos del edificio" class="text-slate-400 hover:text-white transition p-1">
-              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            <h1 id="header-bldg-name" class="font-bold text-lg leading-tight truncate max-w-[180px] sm:max-w-xs">Mi Edificio</h1>
+            <button onclick="navTo('settings')" title="Editar nombre" class="text-slate-400 hover:text-white transition">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
             </button>
           </div>
-          <div class="flex items-center gap-2 text-xs">
-            <span id="liveStatusBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span id="liveStatusText">Conectando...</span>
-            </span>
-          </div>
+          <p class="text-xs text-slate-400 flex items-center gap-1.5">
+            <span id="sync-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="sync-status-text">GitHub Sincronizado</span>
+          </p>
         </div>
       </div>
-
       <div class="flex items-center gap-2">
-        <button onclick="openShareModal()" title="Compartir enlace con vecinos" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 transition">
-          <i data-lucide="share-2" class="w-4 h-4 text-sky-400"></i>
-          <span class="hidden sm:inline">Compartir App</span>
+        <button onclick="syncDataFromGitHub()" title="Refrescar datos" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
         </button>
-        <button onclick="openTransactionModal()" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-3.5 py-2 rounded-xl font-semibold text-xs sm:text-sm flex items-center gap-1.5 shadow-md shadow-sky-600/30 transition">
+        <button onclick="openModal('modal-transaction')" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-3 py-2 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-1.5 shadow transition">
           <i data-lucide="plus-circle" class="w-4 h-4"></i>
           <span>Registrar</span>
         </button>
@@ -66,1163 +53,681 @@
     </div>
   </header>
 
-  <!-- Notification Banner for collaboration sync -->
-  <div id="syncBanner" class="bg-sky-50 border-b border-sky-200 text-sky-900 text-xs px-4 py-2 flex items-center justify-between no-print">
-    <div class="flex items-center gap-2 max-w-4xl mx-auto w-full">
-      <i data-lucide="cloud" class="w-4 h-4 text-sky-600 flex-shrink-0"></i>
-      <span class="truncate">Sincronización comunitaria activa: cualquier aportación o gasto que registres se reflejará en vivo para todos los vecinos.</span>
+  <!-- Banner de configuración si falta el Token de GitHub -->
+  <div id="github-setup-banner" class="max-w-4xl mx-auto px-4 pt-3 hidden">
+    <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+      <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+      <div class="text-xs text-amber-900 space-y-1">
+        <strong class="font-bold text-sm block">Conecta tu repositorio de GitHub</strong>
+        <p>Para que los datos se guarden en tu GitHub y todos los vecinos los vean, configura tu Usuario, Repositorio y Token.</p>
+        <button onclick="navTo('settings')" class="underline font-bold text-indigo-700 mt-1 inline-block">Configurar ahora en Ajustes &rarr;</button>
+      </div>
     </div>
   </div>
 
-  <main class="max-w-5xl mx-auto w-full px-4 py-4 flex-1 space-y-4">
+  <!-- Contenedor Principal con Vistas -->
+  <main class="max-w-4xl mx-auto px-4 py-4 space-y-4">
 
-    <!-- DESKTOP TOP NAV TABS -->
-    <nav class="hidden md:flex bg-white p-1.5 rounded-2xl shadow-xs border border-slate-200 space-x-1" aria-label="Tabs">
-      <button onclick="navTo('dashboard')" id="tabBtn-dashboard" class="tab-btn flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-slate-900 text-white shadow-xs">
-        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Resumen General
-      </button>
-      <button onclick="navTo('movements')" id="tabBtn-movements" class="tab-btn flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-        <i data-lucide="receipt" class="w-4 h-4"></i> Gastos y Cooperaciones
-      </button>
-      <button onclick="navTo('providers')" id="tabBtn-providers" class="tab-btn flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-        <i data-lucide="droplet" class="w-4 h-4 text-sky-600"></i> Pipas y Poda
-      </button>
-      <button onclick="navTo('settings')" id="tabBtn-settings" class="tab-btn flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-        <i data-lucide="users-round" class="w-4 h-4"></i> Departamentos y Edificio
-      </button>
-    </nav>
-
-    <!-- VIEW 1: DASHBOARD -->
+    <!-- VISTA 1: DASHBOARD -->
     <section id="view-dashboard" class="space-y-4">
-      
-      <!-- Metrics Overview Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <!-- Saldo Total en Fondo -->
-        <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex justify-between items-center text-slate-500 mb-1">
             <span class="text-xs font-semibold uppercase tracking-wider">Fondo en Caja</span>
-            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <i data-lucide="wallet" class="w-4 h-4"></i>
-            </div>
+            <i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i>
           </div>
-          <h2 id="metricTotalBalance" class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">$0.00</h2>
-          <span class="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 mt-1">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Saldo real en tiempo real
-          </span>
+          <h2 id="total-balance" class="text-2xl font-black text-slate-900">$0.00</h2>
+          <span class="text-[11px] text-emerald-600 font-medium">Saldo disponible actual</span>
         </div>
 
-        <!-- Cooperaciones Recaudadas -->
-        <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex justify-between items-center text-slate-500 mb-1">
-            <span class="text-xs font-semibold uppercase tracking-wider">Aportaciones Vecinales</span>
-            <div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-              <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
-            </div>
+            <span class="text-xs font-semibold uppercase tracking-wider">Total Recaudado</span>
+            <i data-lucide="arrow-down-left" class="w-4 h-4 text-indigo-600"></i>
           </div>
-          <h2 id="metricTotalIncome" class="text-2xl sm:text-3xl font-black text-sky-600 tracking-tight">$0.00</h2>
-          <span id="metricIncomeCount" class="text-[11px] text-slate-400 mt-1 block">0 cuotas cubiertas</span>
+          <h2 id="total-income" class="text-2xl font-black text-indigo-600">$0.00</h2>
+          <span id="income-count" class="text-[11px] text-slate-400">0 cuotas cobradas</span>
         </div>
 
-        <!-- Total Gastos de Mantenimiento -->
-        <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex justify-between items-center text-slate-500 mb-1">
-            <span class="text-xs font-semibold uppercase tracking-wider">Gastos de Operación</span>
-            <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-            </div>
+            <span class="text-xs font-semibold uppercase tracking-wider">Total Gastado</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-600"></i>
           </div>
-          <h2 id="metricTotalExpense" class="text-2xl sm:text-3xl font-black text-rose-600 tracking-tight">$0.00</h2>
-          <span id="metricExpenseCount" class="text-[11px] text-slate-400 mt-1 block">Agua, poda y servicios</span>
+          <h2 id="total-expense" class="text-2xl font-black text-rose-600">$0.00</h2>
+          <span id="expense-count" class="text-[11px] text-slate-400">0 servicios pagados</span>
         </div>
       </div>
 
-      <!-- Compliance & Distribution Grid -->
+      <!-- Gráfica y Estado Mensual -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        <!-- Estado de Cuotas Vecinales del Mes -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-between">
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
-                <i data-lucide="calendar-check" class="w-4 h-4 text-sky-600"></i> Cuotas del Mes en Curso
-              </h3>
-              <span id="metricComplianceBadge" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-sky-100 text-sky-800">0%</span>
-            </div>
-            <p class="text-xs text-slate-500 mb-3" id="currentMonthYearLabel">Mes actual</p>
-            
-            <div class="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden mb-3">
-              <div id="metricProgressBar" class="bg-sky-600 h-3.5 rounded-full transition-all duration-700" style="width: 0%"></div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 bg-slate-50 rounded-xl p-3 border border-slate-100 text-xs">
-            <div>
-              <span class="text-slate-400 block text-[10px] font-bold uppercase">Al corriente</span>
-              <strong id="metricDeptsPaid" class="text-emerald-600 text-sm font-black">0 Deptos</strong>
-            </div>
-            <div>
-              <span class="text-slate-400 block text-[10px] font-bold uppercase">Pendientes</span>
-              <strong id="metricDeptsPending" class="text-rose-500 text-sm font-black">0 Deptos</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- Gráfica de Gastos Chart.js -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-xs border border-slate-200 flex flex-col items-center">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center">
           <div class="w-full flex justify-between items-center mb-2">
-            <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
-              <i data-lucide="pie-chart" class="w-4 h-4 text-sky-600"></i> Distribución de Gastos
+            <h3 class="font-bold text-sm text-slate-700 flex items-center gap-1.5">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i> Gastos por Categoría
             </h3>
-            <span class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">Categorías</span>
           </div>
-          <div class="relative w-full max-w-[210px] aspect-square flex items-center justify-center">
-            <canvas id="categoryChart"></canvas>
-            <div id="noChartData" class="absolute text-xs text-slate-400 text-center hidden">
-              Aún no hay gastos registrados
+          <div class="relative w-full max-w-[220px] aspect-square flex items-center justify-center">
+            <canvas id="expenseChart"></canvas>
+          </div>
+          <p id="chart-placeholder" class="text-xs text-slate-400 my-auto hidden">Sin gastos registrados.</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="font-bold text-sm text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i> Cumplimiento Mensual
+              </h3>
+              <span id="compliance-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">0%</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">Seguimiento de cuotas pagadas este mes:</p>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden mb-3">
+              <div id="compliance-progress" class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-3 text-xs text-slate-600 space-y-1">
+            <div class="flex justify-between">
+              <span>Departamentos al corriente:</span>
+              <strong id="paid-depts-count" class="text-emerald-700">0</strong>
+            </div>
+            <div class="flex justify-between">
+              <span>Departamentos pendientes:</span>
+              <strong id="pending-depts-count" class="text-rose-600">0</strong>
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- Atajos Rápidos de Pipas y Poda -->
-      <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-xs border border-slate-200 space-y-3">
-        <div class="flex justify-between items-center">
-          <div>
-            <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
-              <i data-lucide="phone-call" class="w-4 h-4 text-sky-600"></i> Contactos Directos de Emergencia y Mantenimiento
-            </h3>
-            <p class="text-xs text-slate-500">Llama o envía WhatsApp con un clic a los proveedores guardados.</p>
-          </div>
-          <button onclick="navTo('providers')" class="text-xs font-bold text-sky-600 hover:text-sky-800 transition">
-            Ver Directorio
-          </button>
+      <!-- Contacto Rápido: Pipas de Agua y Poda -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <i data-lucide="phone-call" class="w-4 h-4 text-indigo-600"></i> Contacto Rápido de Servicios
+          </h3>
+          <button onclick="navTo('providers')" class="text-xs text-indigo-600 font-semibold hover:underline">Ver Directorio</button>
         </div>
-        <div id="quickProvidersList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <!-- Populated dynamically -->
-        </div>
+        <div id="quick-providers-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
       </div>
 
       <!-- Últimos Movimientos -->
-      <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex justify-between items-center">
           <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
             <i data-lucide="history" class="w-4 h-4 text-slate-500"></i> Movimientos Recientes
           </h3>
-          <button onclick="navTo('movements')" class="text-xs font-bold text-sky-600 hover:text-sky-800">
-            Ver Todos
-          </button>
+          <button onclick="navTo('transactions')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Ver todo</button>
         </div>
-        <div id="recentMovementsList" class="divide-y divide-slate-100">
-          <!-- Injected via JS -->
-        </div>
+        <div id="recent-list" class="divide-y divide-slate-100"></div>
       </div>
-
     </section>
 
-    <!-- VIEW 2: MOVEMENTS (HISTORIAL COMPLETO) -->
-    <section id="view-movements" class="hidden space-y-4">
-      <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        <div class="flex flex-wrap gap-2 items-center flex-1">
-          <select id="filterType" onchange="renderMovementsTable()" class="text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
+    <!-- VISTA 2: LISTA DE MOVIMIENTOS -->
+    <section id="view-transactions" class="hidden space-y-3">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-2 items-center justify-between">
+        <div class="flex gap-2">
+          <select id="filter-type" onchange="renderTransactions()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
             <option value="ALL">Todos los tipos</option>
-            <option value="INCOME">Solo Cooperaciones (+)</option>
-            <option value="EXPENSE">Solo Gastos (-)</option>
+            <option value="INCOME">Solo Cooperaciones</option>
+            <option value="EXPENSE">Solo Gastos</option>
           </select>
-          <select id="filterCategory" onchange="renderMovementsTable()" class="text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 font-medium focus:ring-2 focus:ring-sky-500 outline-none">
-            <option value="ALL">Todas las Categorías</option>
-            <option value="Cuota Ordinaria">Cuota Ordinaria</option>
-            <option value="Cuota Extraordinaria">Cuota Extraordinaria</option>
-            <option value="Agua">Pipa de Agua / Recibo</option>
+          <select id="filter-category" onchange="renderTransactions()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+            <option value="ALL">Todas las categorías</option>
+            <option value="Agua">Agua Potable / Pipas</option>
             <option value="Poda y Jardinería">Poda y Jardinería</option>
-            <option value="Bombas y Fontanería">Bombas de Agua / Fontanería</option>
-            <option value="Luz y Electricidad">Luz Áreas Comunes / CFE</option>
-            <option value="Limpieza">Limpieza de Áreas Comunes</option>
-            <option value="Otros">Otros Imprevistos</option>
+            <option value="Mantenimiento General">Mantenimiento General</option>
+            <option value="Luz Áreas Comunes">Luz CFE</option>
+            <option value="Limpieza">Limpieza</option>
+            <option value="Otros">Otros</option>
           </select>
-          <div class="relative flex-1 min-w-[140px]">
-            <input type="text" id="searchKeyword" oninput="renderMovementsTable()" placeholder="Buscar por depto, nombre o nota..." class="w-full text-xs pl-8 pr-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-sky-500 outline-none" />
-            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
-          </div>
         </div>
-
-        <div class="flex items-center gap-2">
-          <button onclick="exportCSV()" class="text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
-            <i data-lucide="download" class="w-4 h-4"></i> Exportar Excel (CSV)
-          </button>
-          <button onclick="openTransactionModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1 shadow-sm transition">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nuevo
-          </button>
-        </div>
+        <button onclick="exportToCSV()" class="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-lg flex items-center gap-1.5 transition">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar a Excel (CSV)
+        </button>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
-        <div id="allMovementsList" class="divide-y divide-slate-100">
-          <!-- Populated by JS -->
-        </div>
-        <div id="noMovementsFound" class="hidden p-8 text-center text-xs text-slate-400">
-          No se encontraron movimientos registrados con esos filtros.
-        </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div id="all-transactions-list" class="divide-y divide-slate-100"></div>
       </div>
     </section>
 
-    <!-- VIEW 3: PROVIDERS DIRECTORY -->
+    <!-- VISTA 3: SERVICIOS Y PROVEEDORES -->
     <section id="view-providers" class="hidden space-y-4">
-      <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 space-y-4">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-3">
           <div>
             <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
-              <i data-lucide="contact" class="w-5 h-5 text-sky-600"></i> Proveedores de Servicios Prioritarios
+              <i data-lucide="contact" class="w-5 h-5 text-indigo-600"></i> Directorio de Servicios
             </h2>
-            <p class="text-xs text-slate-500">Contactos compartidos por los vecinos: Pipas de agua, servicio de poda, fontanero y emergencias.</p>
+            <p class="text-xs text-slate-500">Contactos directos de pipas, poda y mantenimiento.</p>
           </div>
-          <button onclick="openProviderModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition">
-            <i data-lucide="plus" class="w-4 h-4"></i> Agregar Proveedor
+          <button onclick="openModal('modal-provider')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1 shadow transition">
+            <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Proveedor
           </button>
         </div>
 
-        <div id="providersGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <!-- Populated by JS -->
-        </div>
+        <div id="full-providers-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
       </div>
     </section>
 
-    <!-- VIEW 4: SETTINGS & DEPARTMENTS -->
+    <!-- VISTA 4: AJUSTES Y GITHUB SYNC -->
     <section id="view-settings" class="hidden space-y-4">
-      
-      <!-- Edición del Edificio -->
-      <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 space-y-4">
-        <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+      <!-- Configuración de Conexión GitHub -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+          <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
+            <i data-lucide="github" class="w-5 h-5 text-slate-900"></i> Conexión a GitHub (Base de Datos)
+          </h2>
+          <p class="text-xs text-slate-500">Permite sincronizar las cuentas para que todos los vecinos vean y editen la misma información.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
-              <i data-lucide="building" class="w-5 h-5 text-sky-600"></i> Nombre y Configuración del Inmueble
-            </h2>
-            <p class="text-xs text-slate-500">Los cambios que hagas aquí se actualizan de inmediato en los teléfonos de todos los vecinos.</p>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario de GitHub</label>
+            <input type="text" id="gh-owner" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="TuUsuario" />
           </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Repositorio</label>
+            <input type="text" id="gh-repo" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="control-edificio" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Token de Acceso Personal</label>
+            <input type="password" id="gh-token" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none font-mono" placeholder="ghp_xxxx..." />
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="saveGitHubConfig()" class="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow transition">
+            <i data-lucide="save" class="w-4 h-4"></i> Guardar Conexión y Sincronizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Datos del Condominio -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <div class="border-b border-slate-100 pb-3">
+          <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
+            <i data-lucide="building" class="w-5 h-5 text-indigo-600"></i> Datos del Edificio
+          </h2>
+          <p class="text-xs text-slate-500">Personaliza el nombre y cuota ordinaria base.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Edificio o Privada</label>
-            <input type="text" id="settingBldgNameInput" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 outline-none" placeholder="Ej. Condominio Las Palmas" />
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Edificio / Privada</label>
+            <input type="text" id="setting-bldg-name" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Cuota Ordinaria Mensual Sugerida ($ MXN)</label>
-            <input type="number" id="settingDefaultFeeInput" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 outline-none" placeholder="500" />
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Cuota Ordinaria Sugerida ($)</label>
+            <input type="number" id="setting-default-fee" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
         </div>
 
-        <button onclick="saveBuildingSettings()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm transition">
-          <i data-lucide="save" class="w-4 h-4"></i> Guardar Nombre en la Nube
+        <button onclick="saveBuildingSettings()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow transition">
+          <i data-lucide="save" class="w-4 h-4"></i> Actualizar Datos
         </button>
       </div>
 
-      <!-- Catálogo de Departamentos -->
-      <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 space-y-4">
+      <!-- Departamentos -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-3">
           <div>
             <h2 class="font-bold text-base text-slate-900 flex items-center gap-2">
-              <i data-lucide="home" class="w-5 h-5 text-sky-600"></i> Directorio de Departamentos
+              <i data-lucide="home" class="w-5 h-5 text-indigo-600"></i> Departamentos y Residentes
             </h2>
-            <p class="text-xs text-slate-500">Agrega o edita los departamentos del edificio para el control de cuotas.</p>
+            <p class="text-xs text-slate-500">Viviendas registradas en el edificio.</p>
           </div>
-          <button onclick="openDeptModal()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition">
-            <i data-lucide="user-plus" class="w-4 h-4"></i> + Nuevo Depto
+          <button onclick="openModal('modal-dept')" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1 transition">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Agregar Depto
           </button>
         </div>
-
-        <div id="departmentsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <!-- Populated by JS -->
-        </div>
+        <div id="departments-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
       </div>
-
-      <!-- Enlace para compartir -->
-      <div class="bg-gradient-to-r from-slate-900 to-sky-950 text-white p-5 rounded-2xl shadow-md space-y-3">
-        <h3 class="font-bold text-sm flex items-center gap-2">
-          <i data-lucide="link" class="w-4 h-4 text-sky-400"></i> Enlace Compartido del Edificio
-        </h3>
-        <p class="text-xs text-slate-300">
-          Copia el enlace de esta aplicación y compártelo en el grupo de WhatsApp de los vecinos. Todos verán la misma información y podrán colaborar sin necesidad de instalar programas adicionales.
-        </p>
-        <button onclick="openShareModal()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
-          <i data-lucide="share-2" class="w-4 h-4"></i> Compartir con Vecinos
-        </button>
-      </div>
-
     </section>
 
   </main>
 
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 py-1.5 md:hidden shadow-lg no-print">
+  <!-- Barra de Navegación Inferior (Móvil) -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 py-1.5 md:hidden shadow-lg">
     <div class="flex justify-around items-center">
-      <button onclick="navTo('dashboard')" id="mobileNav-dashboard" class="flex flex-col items-center text-sky-600 p-1">
+      <button onclick="navTo('dashboard')" id="btn-nav-dashboard" class="flex flex-col items-center text-indigo-600 p-1">
         <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-        <span class="text-[10px] font-bold mt-0.5">Inicio</span>
+        <span class="text-[10px] font-semibold mt-0.5">Inicio</span>
       </button>
-      <button onclick="navTo('movements')" id="mobileNav-movements" class="flex flex-col items-center text-slate-400 p-1">
+      <button onclick="navTo('transactions')" id="btn-nav-transactions" class="flex flex-col items-center text-slate-400 p-1">
         <i data-lucide="receipt" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold mt-0.5">Gastos/Cuotas</span>
+        <span class="text-[10px] font-medium mt-0.5">Movimientos</span>
       </button>
-      <button onclick="navTo('providers')" id="mobileNav-providers" class="flex flex-col items-center text-slate-400 p-1">
-        <i data-lucide="droplet" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold mt-0.5">Pipas/Poda</span>
+      <button onclick="navTo('providers')" id="btn-nav-providers" class="flex flex-col items-center text-slate-400 p-1">
+        <i data-lucide="contact" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium mt-0.5">Servicios</span>
       </button>
-      <button onclick="navTo('settings')" id="mobileNav-settings" class="flex flex-col items-center text-slate-400 p-1">
-        <i data-lucide="users-round" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold mt-0.5">Deptos</span>
+      <button onclick="navTo('settings')" id="btn-nav-settings" class="flex flex-col items-center text-slate-400 p-1">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium mt-0.5">Ajustes</span>
       </button>
     </div>
   </nav>
 
-  <!-- MODAL: REGISTRAR MOVIMIENTO (INGRESO / GASTO) -->
-  <div id="modalTransaction" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+  <!-- MODAL: REGISTRAR MOVIMIENTO -->
+  <div id="modal-transaction" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl w-full max-w-md p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto no-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-bold text-base text-slate-900 flex items-center gap-2" id="modalTxHeader">
-          <i data-lucide="plus-circle" class="w-5 h-5 text-sky-600"></i> Registrar Movimiento
-        </h3>
-        <button onclick="closeModal('modalTransaction')" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
+        <h3 class="font-bold text-lg text-slate-900" id="tx-modal-title">Registrar Movimiento</h3>
+        <button onclick="closeModal('modal-transaction')" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <!-- Tipo de Movimiento Selector -->
       <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-        <button type="button" id="btnTabIncome" onclick="setMovementType('INCOME')" class="py-2 rounded-lg text-xs font-bold transition shadow bg-white text-sky-600 flex items-center justify-center gap-1.5">
-          <i data-lucide="plus" class="w-4 h-4"></i> Cuota Vecino (+)
+        <button type="button" id="tab-type-income" onclick="setTxType('INCOME')" class="py-2 rounded-lg text-xs font-bold transition shadow bg-white text-indigo-600">
+          Cooperación Vecino (+)
         </button>
-        <button type="button" id="btnTabExpense" onclick="setMovementType('EXPENSE')" class="py-2 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-slate-900 flex items-center justify-center gap-1.5">
-          <i data-lucide="minus" class="w-4 h-4"></i> Gasto / Servicio (-)
+        <button type="button" id="tab-type-expense" onclick="setTxType('EXPENSE')" class="py-2 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-slate-900">
+          Gasto / Servicio (-)
         </button>
       </div>
 
-      <form id="formTransaction" onsubmit="handleTransactionSubmit(event)" class="space-y-3">
-        <input type="hidden" id="txType" value="INCOME" />
+      <form id="form-transaction" onsubmit="handleTransactionSubmit(event)" class="space-y-3">
+        <input type="hidden" id="tx-type" value="INCOME" />
 
-        <!-- Campos para Ingreso de Vecino -->
-        <div id="incomeFieldsBlock" class="space-y-3">
+        <div id="field-income-block" class="space-y-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Departamento / Casa *</label>
-            <select id="txDeptSelect" onchange="autoFillResidentFromDept()" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white font-medium"></select>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Departamento / Casa</label>
+            <select id="tx-dept" onchange="autoFillResident()" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"></select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Vecino / Titular</label>
-            <input type="text" id="txResidentName" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none" placeholder="Nombre completo" required />
-          </div>
-        </div>
-
-        <!-- Campos para Gastos y Servicios -->
-        <div id="expenseFieldsBlock" class="space-y-3 hidden">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Categoría del Servicio *</label>
-            <select id="txExpenseCategory" onchange="filterProviderQuickSelect()" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white font-medium">
-              <option value="Agua">Pipa de Agua Potable / Recibo de Agua</option>
-              <option value="Poda y Jardinería">Poda de Árboles y Jardinería</option>
-              <option value="Bombas y Fontanería">Reparación de Bomba / Fontanería</option>
-              <option value="Luz y Electricidad">Luz CFE Pasillos / Electricista</option>
-              <option value="Limpieza">Artículos y Servicio de Limpieza</option>
-              <option value="Otros">Otros Imprevistos / Reparaciones</option>
-            </select>
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="block text-xs font-semibold text-slate-600">Proveedor Vinculado (Opcional)</label>
-              <button type="button" onclick="openProviderModal()" class="text-[10px] text-sky-600 font-bold hover:underline">+ Nuevo Proveedor</button>
-            </div>
-            <select id="txProviderSelect" onchange="applyProviderToConcept()" class="w-full text-sm p-2 rounded-xl border border-slate-200 mb-1 bg-white outline-none text-slate-700">
-              <!-- Populated dynamically -->
-            </select>
-            <input type="text" id="txProviderCustom" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" placeholder="O nombre del proveedor / técnico" />
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Residente</label>
+            <input type="text" id="tx-resident" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white outline-none" required />
           </div>
         </div>
 
-        <!-- Monto y Fecha -->
+        <div id="field-expense-block" class="space-y-3 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Categoría del Gasto</label>
+            <select id="tx-category" onchange="autoFilterProviderOptions()" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="Agua">Agua Potable / Pipas</option>
+              <option value="Poda y Jardinería">Poda y Jardinería</option>
+              <option value="Mantenimiento General">Mantenimiento y Reparación</option>
+              <option value="Luz Áreas Comunes">Luz CFE</option>
+              <option value="Limpieza">Insumos de Limpieza</option>
+              <option value="Otros">Otro Gasto</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Proveedor / Contacto Guardado</label>
+            <select id="tx-provider-select" onchange="applySelectedProvider()" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 mb-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"></select>
+            <input type="text" id="tx-provider" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="O escribe el nombre manualmente" />
+          </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Monto ($ MXN) *</label>
-            <input type="number" step="0.5" id="txAmount" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500 outline-none font-bold" placeholder="500.00" required />
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Importe ($ MXN)</label>
+            <input type="number" step="0.5" id="tx-amount" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none font-bold" required />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha *</label>
-            <input type="date" id="txDate" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" required />
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha</label>
+            <input type="date" id="tx-date" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" required />
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Concepto o Notas *</label>
-          <input type="text" id="txNotes" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" placeholder="Ej. Cuota mes en curso / Pipa de 10,000L cisterna principal" required />
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Detalle / Notas</label>
+          <input type="text" id="tx-notes" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="Ej. Pipa de 10,000L o Cuota de mantenimiento" />
         </div>
 
-        <button type="submit" id="btnSubmitTx" class="w-full bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold py-3 rounded-xl shadow-md shadow-sky-600/30 transition mt-2">
-          Guardar en la Nube
+        <button type="submit" id="btn-save-tx" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold py-3 rounded-xl shadow-lg transition mt-2 flex items-center justify-center gap-2">
+          <span>Guardar Movimiento</span>
         </button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: AGREGAR / EDITAR PROVEEDOR (PIPA / PODA) -->
-  <div id="modalProvider" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+  <!-- MODAL: AGREGAR PROVEEDOR -->
+  <div id="modal-provider" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
-          <i data-lucide="contact" class="w-5 h-5 text-sky-600"></i> Registrar Contacto de Servicio
-        </h3>
-        <button onclick="closeModal('modalProvider')" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
+        <h3 class="font-bold text-base text-slate-900">Agregar Proveedor de Servicio</h3>
+        <button onclick="closeModal('modal-provider')" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <form id="formProvider" onsubmit="handleProviderSubmit(event)" class="space-y-3">
+      <form id="form-provider" onsubmit="handleProviderSubmit(event)" class="space-y-3">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Servicio *</label>
-          <select id="provCategory" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none bg-white font-medium">
-            <option value="Agua">Pipa de Agua Potable</option>
-            <option value="Poda y Jardinería">Poda y Desmalezado de Jardines</option>
-            <option value="Bombas y Fontanería">Mantenimiento de Bombas / Fontanero</option>
-            <option value="Luz y Electricidad">Electricista / Iluminación</option>
-            <option value="Limpieza">Insumos y Limpieza</option>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Servicio</label>
+          <select id="new-prov-category" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none">
+            <option value="Agua">Agua Potable / Pipas</option>
+            <option value="Poda y Jardinería">Poda y Jardinería</option>
+            <option value="Mantenimiento General">Fontanería / Bombas</option>
+            <option value="Electricista">Electricista / CFE</option>
             <option value="Otros">Otro Servicio</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Proveedor o Chofer *</label>
-          <input type="text" id="provName" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" placeholder="Ej. Pipas San Jerónimo (Don Mario)" required />
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Proveedor</label>
+          <input type="text" id="new-prov-name" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="Ej. Pipas San Jerónimo" required />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono (Llamada / WhatsApp) *</label>
-          <input type="tel" id="provPhone" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" placeholder="10 dígitos (ej. 5512345678)" required />
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono (Llamadas / WhatsApp)</label>
+          <input type="tel" id="new-prov-phone" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="10 dígitos" required />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Capacidad / Precio estimado / Notas</label>
-          <input type="text" id="provNotes" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" placeholder="Ej. Pipa de 10,000L $850 / Poda quincenal $600" />
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Notas / Tarifa / Capacidad</label>
+          <input type="text" id="new-prov-notes" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="Ej. Pipa 10,000L $850" />
         </div>
 
-        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl shadow transition mt-1">
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow transition mt-1">
           Guardar Proveedor
         </button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: AGREGAR / EDITAR DEPARTAMENTO -->
-  <div id="modalDept" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+  <!-- MODAL: AGREGAR DEPARTAMENTO -->
+  <div id="modal-dept" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
-          <i data-lucide="home" class="w-5 h-5 text-sky-600"></i> Registrar Departamento
-        </h3>
-        <button onclick="closeModal('modalDept')" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
+        <h3 class="font-bold text-base text-slate-900">Agregar Departamento</h3>
+        <button onclick="closeModal('modal-dept')" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <form id="formDept" onsubmit="handleDeptSubmit(event)" class="space-y-3">
+      <form id="form-dept" onsubmit="handleDeptSubmit(event)" class="space-y-3">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Identificador del Departamento *</label>
-          <input type="text" id="deptIdInput" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none font-bold" placeholder="Ej. Depto 101, Casa 4, Depto B" required />
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Identificador</label>
+          <input type="text" id="new-dept-id" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="Ej. Depto 101, Casa 4" required />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Vecino Titular *</label>
-          <input type="text" id="deptOwnerInput" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" placeholder="Nombre completo" required />
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Residente</label>
+          <input type="text" id="new-dept-owner" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="Nombre completo" required />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono de WhatsApp (Opcional)</label>
-          <input type="tel" id="deptPhoneInput" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 outline-none" placeholder="10 dígitos para mandar recibos" />
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono (opcional)</label>
+          <input type="tel" id="new-dept-phone" class="w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none" placeholder="10 dígitos" />
         </div>
 
-        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl shadow transition mt-1">
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow transition mt-1">
           Guardar Departamento
         </button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: RECIBO DE WHATSAPP -->
-  <div id="modalReceipt" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4 text-center">
+  <!-- MODAL: RECIBO WHATSAPP -->
+  <div id="modal-receipt" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl space-y-4 text-center">
       <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
         <i data-lucide="check-check" class="w-6 h-6"></i>
       </div>
       <div>
-        <h3 class="font-bold text-lg text-slate-900">Comprobante de Cooperación</h3>
-        <p class="text-xs text-slate-500" id="receiptBldgLabel">Condominio</p>
+        <h3 class="font-bold text-lg text-slate-900">Comprobante de Pago</h3>
+        <p class="text-xs text-slate-500" id="receipt-bldg-label">Control Vecinal</p>
       </div>
 
-      <div id="receiptContent" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left font-mono text-xs space-y-1.5 text-slate-700 select-all whitespace-pre-wrap"></div>
+      <div id="receipt-content" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left font-mono text-xs space-y-1.5 text-slate-700"></div>
 
       <div class="space-y-2 pt-2">
-        <a id="btnSendWhatsAppReceipt" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md transition">
+        <a id="btn-whatsapp-share" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md transition">
           <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar por WhatsApp
         </a>
-        <button onclick="closeModal('modalReceipt')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2.5 rounded-xl transition">
+        <button onclick="closeModal('modal-receipt')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2.5 rounded-xl transition">
           Cerrar
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: COMPARTIR APLICACIÓN CON VECINOS -->
-  <div id="modalShareApp" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl space-y-4 text-center">
-      <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto">
-        <i data-lucide="users" class="w-6 h-6"></i>
-      </div>
-      <div>
-        <h3 class="font-bold text-lg text-slate-900">Invitar a los Vecinos</h3>
-        <p class="text-xs text-slate-500">Comparte este enlace para que todos vean los mismos gastos y aportaciones en tiempo real.</p>
-      </div>
-
-      <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-left">
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Enlace de la aplicación</label>
-        <input type="text" id="shareUrlInput" readonly class="w-full text-xs font-mono bg-white p-2 rounded-lg border border-slate-200 outline-none text-slate-600 select-all" />
-      </div>
-
-      <div class="space-y-2 pt-1">
-        <button onclick="copyShareLink()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow transition text-xs">
-          <i data-lucide="copy" class="w-4 h-4"></i> Copiar Enlace
-        </button>
-        <a id="btnShareWhatsAppGroup" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow transition text-xs">
-          <i data-lucide="message-circle" class="w-4 h-4"></i> Compartir al Grupo de WhatsApp
-        </a>
-        <button onclick="closeModal('modalShareApp')" class="w-full bg-slate-100 text-slate-700 text-xs font-semibold py-2 rounded-xl">
-          Listo
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Notification Toast -->
-  <div id="toastMessage" class="fixed bottom-20 md:bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-medium">
-    <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
-    <span id="toastText">Acción completada</span>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      setDoc, 
-      deleteDoc, 
-      onSnapshot, 
-      collection 
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Application state
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'miedificio-app-vecinos';
-    let firebaseConfig = null;
-    if (typeof __firebase_config !== 'undefined') {
-      try {
-        firebaseConfig = JSON.parse(__firebase_config);
-      } catch (e) {
-        console.error("Config error:", e);
-      }
-    }
-
-    // Default fallback config for local testing if not running in immersive context
-    if (!firebaseConfig) {
-      firebaseConfig = {
-        apiKey: "AIzaSyDummyKeyForTemplateOnly",
-        authDomain: "miedificio-preview.firebaseapp.com",
-        projectId: "miedificio-preview",
-        storageBucket: "miedificio-preview.appspot.com"
-      };
-    }
-
-    let app = null;
-    let auth = null;
-    let db = null;
-    let currentUser = null;
-    let isCloudReady = false;
-
-    // Seed state for immediate display while cloud data streams
-    const state = {
-      config: {
-        buildingName: "Condominio Los Pinos",
-        defaultFee: 500
-      },
-      departments: [
-        { id: "Depto 101", owner: "Carlos Ramírez", phone: "5512345678" },
-        { id: "Depto 102", owner: "Beatriz López", phone: "5523456789" },
-        { id: "Depto 201", owner: "Mariana Sánchez", phone: "5534567890" },
-        { id: "Depto 202", owner: "Jorge González", phone: "5545678901" }
-      ],
+  <!-- LÓGICA DE GITHUB Y SINCRONIZACIÓN -->
+  <script>
+    // Configuración por defecto
+    const DEFAULT_DATA = {
+      buildingName: "Privada Las Palmas",
+      defaultFee: 500,
       providers: [
-        {
-          id: "prov-pipas",
-          name: "Pipas San Jerónimo (Don Mario)",
-          category: "Agua",
-          phone: "5512348899",
-          notes: "Pipa de 10,000L ($850 MXN) - Entrega en 2 hrs"
-        },
-        {
-          id: "prov-poda",
-          name: "Jardinería y Poda El Roble (José)",
-          category: "Poda y Jardinería",
-          phone: "5599887766",
-          notes: "Poda integral, corte de pasto y retiro de ramas ($600 MXN)"
-        },
-        {
-          id: "prov-bomba",
-          name: "Técnico de Bombas & Fontanería (Pedro)",
-          category: "Bombas y Fontanería",
-          phone: "5533221100",
-          notes: "Reparación de hidroneumático y flotador cisterna"
-        }
+        { id: "prov-1", name: "Pipas San Jerónimo (Don Mario)", category: "Agua", phone: "9381234567", notes: "Pipa de 10,000L ($850 MXN)" },
+        { id: "prov-2", name: "Jardinería y Poda El Roble", category: "Poda y Jardinería", phone: "9387654321", notes: "Poda integral y retiro de ramas ($600 MXN)" }
+      ],
+      departments: [
+        { id: "Depto 101", owner: "Carlos Ramírez", phone: "" },
+        { id: "Depto 102", owner: "Beatriz López", phone: "" },
+        { id: "Depto 201", owner: "Mariana Sánchez", phone: "" },
+        { id: "Depto 202", owner: "Jorge González", phone: "" }
       ],
       transactions: [
-        {
-          id: "tx-demo-1",
-          type: "INCOME",
-          department: "Depto 101",
-          resident: "Carlos Ramírez",
-          amount: 500,
-          date: new Date().toISOString().split("T")[0],
-          notes: "Cuota ordinaria mensual",
-          category: "Cuota Ordinaria"
-        },
-        {
-          id: "tx-demo-2",
-          type: "EXPENSE",
-          category: "Agua",
-          provider: "Pipas San Jerónimo (Don Mario)",
-          amount: 850,
-          date: new Date().toISOString().split("T")[0],
-          notes: "Pipa de 10,000L cisterna principal por baja presión"
-        },
-        {
-          id: "tx-demo-3",
-          type: "EXPENSE",
-          category: "Poda y Jardinería",
-          provider: "Jardinería y Poda El Roble (José)",
-          amount: 600,
-          date: new Date().toISOString().split("T")[0],
-          notes: "Poda de árboles de pasillo y jardín central"
-        }
+        { id: "tx-1", type: "INCOME", department: "Depto 101", resident: "Carlos Ramírez", amount: 500, date: new Date().toISOString().split("T")[0], notes: "Cuota ordinaria", category: "Cuota Ordinaria" }
       ]
     };
 
-    let chartInstance = null;
+    let appData = JSON.parse(localStorage.getItem("vecinos_app_data")) || DEFAULT_DATA;
+    let ghConfig = JSON.parse(localStorage.getItem("vecinos_gh_config")) || { owner: "", repo: "", token: "" };
+    let currentFileSha = null;
+    let expenseChartInstance = null;
 
-    async function initFirebase() {
+    // --- SINCRONIZACIÓN CON GITHUB API ---
+    async function syncDataFromGitHub() {
+      if (!ghConfig.owner || !ghConfig.repo) {
+        document.getElementById("github-setup-banner").classList.remove("hidden");
+        updateUI();
+        return;
+      }
+
+      setSyncStatus("Sincronizando...", "bg-amber-400");
+      const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/data.json`;
+      const headers = { "Accept": "application/vnd.github+json" };
+      if (ghConfig.token) headers["Authorization"] = `Bearer ${ghConfig.token}`;
+
       try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-
-        // Authenticate before query operations
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+        const res = await fetch(url, { headers });
+        if (res.status === 200) {
+          const json = await res.json();
+          currentFileSha = json.sha;
+          const decodedContent = decodeURIComponent(escape(atob(json.content)));
+          appData = JSON.parse(decodedContent);
+          localStorage.setItem("vecinos_app_data", JSON.stringify(appData));
+          setSyncStatus("GitHub Sincronizado", "bg-emerald-400");
+        } else if (res.status === 404 && ghConfig.token) {
+          // El archivo data.json no existe aún, lo creamos
+          await pushDataToGitHub("Inicializar base de datos de vecinos");
         }
-
-        currentUser = auth.currentUser;
-        isCloudReady = true;
-
-        updateConnectionBadge(true);
-        listenToCloudCollections();
       } catch (err) {
-        console.warn("Modo Local / Simulación (Firebase offline o sin credenciales activas):", err);
-        // Fallback to localStorage gracefully
-        loadLocalFallback();
-        updateConnectionBadge(false);
+        console.error("Error sincronizando:", err);
+        setSyncStatus("Modo local (sin red)", "bg-slate-400");
       }
+      updateUI();
     }
 
-    function updateConnectionBadge(connected) {
-      const badge = document.getElementById("liveStatusBadge");
-      const text = document.getElementById("liveStatusText");
-      if (!badge || !text) return;
+    async function pushDataToGitHub(commitMsg = "Actualizar cuentas del edificio") {
+      localStorage.setItem("vecinos_app_data", JSON.stringify(appData));
+      updateUI();
 
-      if (connected) {
-        badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800";
-        text.textContent = "En vivo (Nube Activa)";
-      } else {
-        badge.className = "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-800";
-        text.textContent = "Modo Local";
-      }
-    }
-
-    function listenToCloudCollections() {
-      if (!db) return;
-
-      // 1. Configuración del edificio
-      const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'config');
-      onSnapshot(configDocRef, (snap) => {
-        if (snap.exists()) {
-          state.config = snap.data();
-          renderUI();
-        } else {
-          // Initialize remote document with defaults
-          setDoc(configDocRef, state.config);
-        }
-      }, (err) => console.error("Error en settings listener:", err));
-
-      // 2. Departamentos
-      const deptsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'departments');
-      onSnapshot(deptsColRef, (snap) => {
-        const list = [];
-        snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-        if (list.length > 0) {
-          state.departments = list;
-        } else {
-          // Seed defaults
-          state.departments.forEach(dept => {
-            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'departments', dept.id), dept);
-          });
-        }
-        renderUI();
-      }, (err) => console.error("Error en departments listener:", err));
-
-      // 3. Proveedores de Pipas y Poda
-      const provsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'providers');
-      onSnapshot(provsColRef, (snap) => {
-        const list = [];
-        snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-        if (list.length > 0) {
-          state.providers = list;
-        } else {
-          state.providers.forEach(p => {
-            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'providers', p.id), p);
-          });
-        }
-        renderUI();
-      }, (err) => console.error("Error en providers listener:", err));
-
-      // 4. Movimientos (Ingresos y Gastos)
-      const txsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'transactions');
-      onSnapshot(txsColRef, (snap) => {
-        const list = [];
-        snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-        if (list.length > 0) {
-          state.transactions = list;
-        } else {
-          state.transactions.forEach(t => {
-            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'transactions', t.id), t);
-          });
-        }
-        renderUI();
-      }, (err) => console.error("Error en transactions listener:", err));
-    }
-
-    function loadLocalFallback() {
-      const stored = localStorage.getItem('miedificio_local_state');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          state.config = parsed.config || state.config;
-          state.departments = parsed.departments || state.departments;
-          state.providers = parsed.providers || state.providers;
-          state.transactions = parsed.transactions || state.transactions;
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      renderUI();
-    }
-
-    function saveLocalFallback() {
-      localStorage.setItem('miedificio_local_state', JSON.stringify(state));
-    }
-
-    function renderUI() {
-      // 1. Datos del encabezado
-      document.getElementById("headerBldgName").textContent = state.config.buildingName || "Mi Edificio";
-      document.getElementById("settingBldgNameInput").value = state.config.buildingName || "";
-      document.getElementById("settingDefaultFeeInput").value = state.config.defaultFee || 500;
-      document.getElementById("receiptBldgLabel").textContent = state.config.buildingName || "Condominio";
-
-      // 2. Cálculos financieros
-      let totalIncome = 0;
-      let totalExpense = 0;
-      let countIncome = 0;
-      let countExpense = 0;
-      const categoryTotals = {};
-
-      const currentMonthKey = new Date().toISOString().slice(0, 7); // YYYY-MM
-      const paidDeptsThisMonth = new Set();
-
-      // Sort transactions descending by date
-      const sortedTxs = [...state.transactions].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-      sortedTxs.forEach(t => {
-        const val = parseFloat(t.amount) || 0;
-        if (t.type === "INCOME") {
-          totalIncome += val;
-          countIncome++;
-          if (t.date && t.date.startsWith(currentMonthKey) && t.department) {
-            paidDeptsThisMonth.add(t.department);
-          }
-        } else {
-          totalExpense += val;
-          countExpense++;
-          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + val;
-        }
-      });
-
-      const currentBalance = totalIncome - totalExpense;
-
-      // Actualizar tarjetas del dashboard
-      const elBalance = document.getElementById("metricTotalBalance");
-      elBalance.textContent = formatMoney(currentBalance);
-      elBalance.className = `text-2xl sm:text-3xl font-black tracking-tight ${currentBalance >= 0 ? 'text-slate-900' : 'text-rose-600'}`;
-
-      document.getElementById("metricTotalIncome").textContent = formatMoney(totalIncome);
-      document.getElementById("metricTotalExpense").textContent = formatMoney(totalExpense);
-      document.getElementById("metricIncomeCount").textContent = `${countIncome} aportaciones de vecinos`;
-      document.getElementById("metricExpenseCount").textContent = `${countExpense} pagos de servicios y pipas`;
-
-      // Cumplimiento condominal del mes
-      const totalDepts = state.departments.length;
-      const paidCount = paidDeptsThisMonth.size;
-      const pendingCount = Math.max(0, totalDepts - paidCount);
-      const compliancePct = totalDepts > 0 ? Math.round((paidCount / totalDepts) * 100) : 0;
-
-      document.getElementById("metricComplianceBadge").textContent = `${compliancePct}% al corriente`;
-      document.getElementById("metricProgressBar").style.width = `${compliancePct}%`;
-      document.getElementById("metricDeptsPaid").textContent = `${paidCount} de ${totalDepts}`;
-      document.getElementById("metricDeptsPending").textContent = `${pendingCount} Deptos`;
-
-      const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-      const dNow = new Date();
-      document.getElementById("currentMonthYearLabel").textContent = `Cuotas de ${monthNames[dNow.getMonth()]} ${dNow.getFullYear()}`;
-
-      // Renderizar secciones
-      renderRecentTransactions(sortedTxs.slice(0, 5));
-      renderQuickProviders();
-      renderChart(categoryTotals);
-      renderDepartmentsList();
-      renderProvidersGrid();
-      populateDeptSelectOptions();
-      populateProviderOptions();
-
-      // Refrescar tabla si está activa
-      renderMovementsTable();
-
-      lucide.createIcons();
-    }
-
-    function renderRecentTransactions(recents) {
-      const container = document.getElementById("recentMovementsList");
-      if (!container) return;
-
-      if (recents.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400">Sin movimientos registrados aún. Presiona "+ Registrar".</div>`;
+      if (!ghConfig.owner || !ghConfig.repo || !ghConfig.token) {
+        setSyncStatus("Guardado local", "bg-amber-400");
         return;
       }
 
-      container.innerHTML = recents.map(tx => {
-        const isIncome = tx.type === "INCOME";
-        const title = isIncome ? `${escapeHtml(tx.department)} • ${escapeHtml(tx.resident || 'Vecino')}` : escapeHtml(tx.category);
-        const sub = tx.notes || (isIncome ? 'Cuota ordinaria' : (tx.provider || 'Gasto General'));
+      setSyncStatus("Guardando en GitHub...", "bg-amber-400");
+      const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/data.json`;
+      const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(appData, null, 2))));
 
-        return `
-          <div class="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isIncome ? 'bg-sky-100 text-sky-700' : 'bg-rose-100 text-rose-700'}">
-                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
-              </div>
-              <div class="truncate">
-                <div class="font-bold text-xs sm:text-sm text-slate-800 truncate">${title}</div>
-                <div class="text-[11px] text-slate-400 truncate">${formatDate(tx.date)} • ${escapeHtml(sub)}</div>
-              </div>
-            </div>
-            <div class="text-right flex-shrink-0 ml-2">
-              <span class="font-black text-xs sm:text-sm ${isIncome ? 'text-sky-600' : 'text-slate-900'}">
-                ${isIncome ? '+' : '-'}${formatMoney(tx.amount)}
-              </span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
+      const bodyData = {
+        message: commitMsg,
+        content: contentBase64
+      };
+      if (currentFileSha) bodyData.sha = currentFileSha;
 
-    function renderQuickProviders() {
-      const container = document.getElementById("quickProvidersList");
-      if (!container) return;
-
-      const priorityList = state.providers.filter(p => p.category === "Agua" || p.category === "Poda y Jardinería");
-      const list = priorityList.length > 0 ? priorityList.slice(0, 4) : state.providers.slice(0, 4);
-
-      if (list.length === 0) {
-        container.innerHTML = `<div class="col-span-2 text-xs text-slate-400 p-2">Sin proveedores guardados. Añade choferes de pipas o jardineros en "Pipas y Poda".</div>`;
-        return;
-      }
-
-      container.innerHTML = list.map(p => {
-        const isWater = p.category === "Agua";
-        const cleanPhone = (p.phone || '').replace(/\D/g, '');
-        const waText = encodeURIComponent(`Hola, nos comunicamos del edificio ${state.config.buildingName} para cotizar / solicitar servicio de ${p.category}.`);
-
-        return `
-          <div class="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50/80 hover:bg-slate-50 transition">
-            <div class="flex items-center gap-2.5 overflow-hidden">
-              <div class="p-2.5 rounded-xl ${isWater ? 'bg-sky-100 text-sky-600' : 'bg-emerald-100 text-emerald-600'} flex-shrink-0">
-                <i data-lucide="${isWater ? 'droplets' : 'scissors'}" class="w-4 h-4"></i>
-              </div>
-              <div class="truncate">
-                <h4 class="text-xs font-bold text-slate-800 truncate">${escapeHtml(p.name)}</h4>
-                <p class="text-[11px] text-slate-500 truncate">${escapeHtml(p.notes || p.phone)}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
-              <a href="tel:${cleanPhone}" class="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-sky-600 shadow-xs transition" title="Llamar">
-                <i data-lucide="phone" class="w-3.5 h-3.5"></i>
-              </a>
-              <a href="https://wa.me/521${cleanPhone}?text=${waText}" target="_blank" class="p-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition" title="WhatsApp">
-                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-              </a>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderProvidersGrid() {
-      const container = document.getElementById("providersGrid");
-      if (!container) return;
-
-      if (state.providers.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 col-span-2">No hay proveedores guardados. Presiona "+ Agregar Proveedor".</div>`;
-        return;
-      }
-
-      container.innerHTML = state.providers.map(p => {
-        const isWater = p.category === "Agua";
-        const isPrune = p.category === "Poda y Jardinería";
-        const cleanPhone = (p.phone || '').replace(/\D/g, '');
-        const waText = encodeURIComponent(`Hola, nos comunicamos del edificio ${state.config.buildingName} para solicitar servicio.`);
-
-        return `
-          <div class="p-4 rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex justify-between items-start mb-1.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  isWater ? 'bg-sky-50 text-sky-700 border border-sky-200' :
-                  isPrune ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                  'bg-slate-100 text-slate-700'
-                }">${escapeHtml(p.category)}</span>
-                <button onclick="deleteProvider('${p.id}')" class="text-slate-300 hover:text-rose-600 transition p-1" title="Eliminar">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-              </div>
-              <h3 class="font-bold text-sm text-slate-900 leading-snug">${escapeHtml(p.name)}</h3>
-              <p class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.notes || 'Sin detalles adicionales')}</p>
-            </div>
-
-            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i> ${escapeHtml(p.phone)}
-              </span>
-              <div class="flex gap-1.5">
-                <a href="tel:${cleanPhone}" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1 transition">
-                  <i data-lucide="phone-call" class="w-3.5 h-3.5"></i> Llamar
-                </a>
-                <a href="https://wa.me/521${cleanPhone}?text=${waText}" target="_blank" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 shadow-xs transition">
-                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
-                </a>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderDepartmentsList() {
-      const container = document.getElementById("departmentsGrid");
-      if (!container) return;
-
-      const currentMonthKey = new Date().toISOString().slice(0, 7);
-
-      container.innerHTML = state.departments.map(dept => {
-        const isPaidThisMonth = state.transactions.some(t => 
-          t.type === "INCOME" && 
-          t.department === dept.id && 
-          t.date && t.date.startsWith(currentMonthKey)
-        );
-
-        return `
-          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
-            <div class="min-w-0 pr-2">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-900 text-sm">${escapeHtml(dept.id)}</span>
-                <span class="text-[10px] font-black px-1.5 py-0.5 rounded ${isPaidThisMonth ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                  ${isPaidThisMonth ? '✓ Pagado' : 'Pendiente'}
-                </span>
-              </div>
-              <p class="text-xs text-slate-500 truncate mt-0.5">${escapeHtml(dept.owner)} ${dept.phone ? '• 📱 ' + escapeHtml(dept.phone) : ''}</p>
-            </div>
-            <div class="flex items-center gap-1 flex-shrink-0">
-              <button onclick="registerCuotaForDept('${escapeHtml(dept.id)}')" class="bg-white border border-slate-200 hover:bg-sky-50 hover:text-sky-600 text-slate-700 px-2 py-1 rounded-xl text-xs font-semibold shadow-xs transition flex items-center gap-1" title="Registrar cuota">
-                <i data-lucide="coins" class="w-3.5 h-3.5"></i>
-                <span class="hidden sm:inline">Cobrar</span>
-              </button>
-              <button onclick="deleteDepartment('${dept.id}')" class="text-slate-300 hover:text-rose-600 p-1.5 transition" title="Eliminar departamento">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    window.renderMovementsTable = function() {
-      const container = document.getElementById("allMovementsList");
-      const noFound = document.getElementById("noMovementsFound");
-      if (!container) return;
-
-      const fType = document.getElementById("filterType")?.value || "ALL";
-      const fCat = document.getElementById("filterCategory")?.value || "ALL";
-      const query = (document.getElementById("searchKeyword")?.value || "").toLowerCase().trim();
-
-      const sortedTxs = [...state.transactions].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-      const filtered = sortedTxs.filter(t => {
-        if (fType !== "ALL" && t.type !== fType) return false;
-        if (fCat !== "ALL" && t.category !== fCat) return false;
-        if (query) {
-          const matchDept = (t.department || '').toLowerCase().includes(query);
-          const matchRes = (t.resident || '').toLowerCase().includes(query);
-          const matchNotes = (t.notes || '').toLowerCase().includes(query);
-          const matchProv = (t.provider || '').toLowerCase().includes(query);
-          const matchCat = (t.category || '').toLowerCase().includes(query);
-          return matchDept || matchRes || matchNotes || matchProv || matchCat;
-        }
-        return true;
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = "";
-        noFound?.classList.remove("hidden");
-        return;
-      }
-
-      noFound?.classList.add("hidden");
-
-      container.innerHTML = filtered.map(tx => {
-        const isIncome = tx.type === "INCOME";
-        const title = isIncome ? `${escapeHtml(tx.department)} • ${escapeHtml(tx.resident || 'Vecino')}` : escapeHtml(tx.category);
-        const sub = tx.notes || (isIncome ? 'Cuota ordinaria' : (tx.provider || 'Gasto'));
-
-        return `
-          <div class="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="p-2 rounded-xl ${isIncome ? 'bg-sky-50 text-sky-600' : 'bg-rose-50 text-rose-600'} flex-shrink-0">
-                <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
-              </div>
-              <div class="truncate">
-                <div class="font-bold text-xs sm:text-sm text-slate-800 truncate">${title}</div>
-                <div class="text-[11px] text-slate-400 truncate">${formatDate(tx.date)} • ${escapeHtml(sub)}</div>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0 ml-2">
-              <div class="text-right">
-                <span class="font-black text-xs sm:text-sm ${isIncome ? 'text-sky-600' : 'text-slate-900'}">
-                  ${isIncome ? '+' : '-'}${formatMoney(tx.amount)}
-                </span>
-              </div>
-              ${isIncome ? `
-                <button onclick="generateReceiptModal('${tx.id}')" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Compartir Recibo">
-                  <i data-lucide="receipt" class="w-4 h-4"></i>
-                </button>
-              ` : ''}
-              <button onclick="deleteTransaction('${tx.id}')" class="p-1 text-slate-300 hover:text-rose-600 rounded-lg transition" title="Eliminar">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      lucide.createIcons();
-    };
-
-    function renderChart(categoryTotals) {
-      const canvas = document.getElementById("categoryChart");
-      const noData = document.getElementById("noChartData");
-      if (!canvas) return;
-
-      const labels = Object.keys(categoryTotals);
-      const data = Object.values(categoryTotals);
-
-      if (labels.length === 0) {
-        canvas.style.display = "none";
-        noData?.classList.remove("hidden");
-        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-        return;
-      }
-
-      canvas.style.display = "block";
-      noData?.classList.add("hidden");
-
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      chartInstance = new Chart(canvas, {
-        type: "doughnut",
-        data: {
-          labels,
-          datasets: [{
-            data,
-            backgroundColor: ["#0284c7", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#64748b"],
-            borderWidth: 2,
-            borderColor: "#ffffff"
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: { boxWidth: 8, font: { size: 9 }, color: "#64748b" }
-            }
+      try {
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Accept": "application/vnd.github+json",
+            "Authorization": `Bearer ${ghConfig.token}`,
+            "Content-Type": "application/json"
           },
-          cutout: "68%"
+          body: JSON.stringify(bodyData)
+        });
+
+        if (res.ok) {
+          const resData = await res.json();
+          currentFileSha = resData.content.sha;
+          setSyncStatus("GitHub Guardado", "bg-emerald-400");
+        } else {
+          setSyncStatus("Error al guardar en GitHub", "bg-rose-500");
         }
-      });
+      } catch (err) {
+        console.error("Error guardando en GitHub:", err);
+        setSyncStatus("Error de conexión", "bg-rose-500");
+      }
     }
 
-    window.saveBuildingSettings = async function() {
-      const name = document.getElementById("settingBldgNameInput").value.trim();
-      const defaultFee = parseFloat(document.getElementById("settingDefaultFeeInput").value) || 500;
+    function setSyncStatus(text, dotClass) {
+      document.getElementById("sync-status-text").innerText = text;
+      const dot = document.getElementById("sync-status-dot");
+      dot.className = `w-2 h-2 rounded-full ${dotClass}`;
+    }
 
-      if (!name) {
-        showToast("Por favor escribe el nombre del edificio");
+    // --- CONFIGURACIÓN GITHUB ---
+    function saveGitHubConfig() {
+      const owner = document.getElementById("gh-owner").value.trim();
+      const repo = document.getElementById("gh-repo").value.trim();
+      const token = document.getElementById("gh-token").value.trim();
+
+      if (!owner || !repo) {
+        alert("Ingresa al menos el Usuario y Repositorio de GitHub.");
         return;
       }
 
-      state.config.buildingName = name;
-      state.config.defaultFee = defaultFee;
+      ghConfig = { owner, repo, token };
+      localStorage.setItem("vecinos_gh_config", JSON.stringify(ghConfig));
+      document.getElementById("github-setup-banner").classList.add("hidden");
+      alert("Configuración de GitHub guardada. Sincronizando...");
+      syncDataFromGitHub();
+    }
 
-      if (isCloudReady && db) {
-        try {
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'config'), {
-            buildingName: name,
-            defaultFee: defaultFee
-          });
-          showToast("Nombre del edificio sincronizado en la nube");
-        } catch (e) {
-          console.error(e);
-          showToast("Guardado localmente");
+    // --- NAVEGACIÓN ---
+    function navTo(viewName) {
+      document.getElementById("view-dashboard").classList.add("hidden");
+      document.getElementById("view-transactions").classList.add("hidden");
+      document.getElementById("view-providers").classList.add("hidden");
+      document.getElementById("view-settings").classList.add("hidden");
+
+      const navDash = document.getElementById("btn-nav-dashboard");
+      const navTx = document.getElementById("btn-nav-transactions");
+      const navProv = document.getElementById("btn-nav-providers");
+      const navSet = document.getElementById("btn-nav-settings");
+
+      [navDash, navTx, navProv, navSet].forEach(btn => {
+        if(btn) {
+          btn.classList.remove("text-indigo-600");
+          btn.classList.add("text-slate-400");
         }
-      } else {
-        saveLocalFallback();
-        showToast("Guardado localmente");
-      }
-      renderUI();
-    };
+      });
 
-    window.handleTransactionSubmit = async function(e) {
+      if (viewName === "dashboard") {
+        document.getElementById("view-dashboard").classList.remove("hidden");
+        if(navDash) { navDash.classList.add("text-indigo-600"); navDash.classList.remove("text-slate-400"); }
+      } else if (viewName === "transactions") {
+        document.getElementById("view-transactions").classList.remove("hidden");
+        if(navTx) { navTx.classList.add("text-indigo-600"); navTx.classList.remove("text-slate-400"); }
+        renderTransactions();
+      } else if (viewName === "providers") {
+        document.getElementById("view-providers").classList.remove("hidden");
+        if(navProv) { navProv.classList.add("text-indigo-600"); navProv.classList.remove("text-slate-400"); }
+        renderFullProviders();
+      } else if (viewName === "settings") {
+        document.getElementById("view-settings").classList.remove("hidden");
+        if(navSet) { navSet.classList.add("text-indigo-600"); navSet.classList.remove("text-slate-400"); }
+        loadSettingsInputs();
+      }
+      lucide.createIcons();
+    }
+
+    // --- MODALES ---
+    function openModal(id) {
+      document.getElementById(id).classList.remove("hidden");
+      if (id === "modal-transaction") {
+        document.getElementById("tx-date").value = new Date().toISOString().split("T")[0];
+        document.getElementById("tx-amount").value = appData.defaultFee || "";
+        populateDeptSelect();
+        autoFilterProviderOptions();
+      }
+      lucide.createIcons();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+
+    // --- FORMULARIO MOVIMIENTOS ---
+    function setTxType(type) {
+      document.getElementById("tx-type").value = type;
+      const btnIncome = document.getElementById("tab-type-income");
+      const btnExpense = document.getElementById("tab-type-expense");
+      const blockIncome = document.getElementById("field-income-block");
+      const blockExpense = document.getElementById("field-expense-block");
+
+      if (type === "INCOME") {
+        btnIncome.className = "py-2 rounded-lg text-xs font-bold transition shadow bg-white text-indigo-600";
+        btnExpense.className = "py-2 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-slate-900";
+        blockIncome.classList.remove("hidden");
+        blockExpense.classList.add("hidden");
+        document.getElementById("tx-resident").setAttribute("required", "true");
+        document.getElementById("tx-modal-title").innerText = "Registrar Pago de Vecino";
+      } else {
+        btnExpense.className = "py-2 rounded-lg text-xs font-bold transition shadow bg-white text-rose-600";
+        btnIncome.className = "py-2 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-slate-900";
+        blockExpense.classList.remove("hidden");
+        blockIncome.classList.add("hidden");
+        document.getElementById("tx-resident").removeAttribute("required");
+        document.getElementById("tx-modal-title").innerText = "Registrar Gasto de Servicio";
+      }
+    }
+
+    function populateDeptSelect() {
+      const select = document.getElementById("tx-dept");
+      select.innerHTML = "";
+      appData.departments.forEach(dept => {
+        const opt = document.createElement("option");
+        opt.value = dept.id;
+        opt.textContent = `${dept.id} - ${dept.owner}`;
+        select.appendChild(opt);
+      });
+      autoFillResident();
+    }
+
+    function autoFillResident() {
+      const select = document.getElementById("tx-dept");
+      const chosen = appData.departments.find(d => d.id === select.value);
+      if (chosen) document.getElementById("tx-resident").value = chosen.owner;
+    }
+
+    function autoFilterProviderOptions() {
+      const currentCategory = document.getElementById("tx-category").value;
+      const select = document.getElementById("tx-provider-select");
+      select.innerHTML = `<option value="">-- Seleccionar de mis contactos guardados --</option>`;
+
+      const filtered = appData.providers.filter(p => p.category === currentCategory || currentCategory === "Otros");
+      (filtered.length > 0 ? filtered : appData.providers).forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.name;
+        opt.textContent = `${p.name} (${p.phone})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function applySelectedProvider() {
+      const selected = document.getElementById("tx-provider-select").value;
+      if (selected) document.getElementById("tx-provider").value = selected;
+    }
+
+    async function handleTransactionSubmit(e) {
       e.preventDefault();
-      const type = document.getElementById("txType").value;
-      const amount = parseFloat(document.getElementById("txAmount").value) || 0;
-      const date = document.getElementById("txDate").value;
-      const notes = document.getElementById("txNotes").value.trim();
+      const type = document.getElementById("tx-type").value;
+      const amount = parseFloat(document.getElementById("tx-amount").value) || 0;
+      const date = document.getElementById("tx-date").value;
+      const notes = document.getElementById("tx-notes").value;
 
       const newTx = {
         id: "tx-" + Date.now(),
@@ -1233,381 +738,385 @@
       };
 
       if (type === "INCOME") {
-        newTx.department = document.getElementById("txDeptSelect").value;
-        newTx.resident = document.getElementById("txResidentName").value.trim();
+        newTx.department = document.getElementById("tx-dept").value;
+        newTx.resident = document.getElementById("tx-resident").value;
         newTx.category = "Cuota Ordinaria";
       } else {
-        newTx.category = document.getElementById("txExpenseCategory").value;
-        newTx.provider = document.getElementById("txProviderCustom").value.trim() || document.getElementById("txProviderSelect").value || "Servicio General";
+        newTx.category = document.getElementById("tx-category").value;
+        newTx.provider = document.getElementById("tx-provider").value || "Servicio General";
       }
 
-      if (isCloudReady && db) {
-        try {
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'transactions', newTx.id), newTx);
-          showToast("Movimiento sincronizado en vivo");
-        } catch (err) {
-          console.error(err);
-          state.transactions.unshift(newTx);
-          saveLocalFallback();
-          showToast("Guardado en dispositivo");
-        }
-      } else {
-        state.transactions.unshift(newTx);
-        saveLocalFallback();
-        showToast("Guardado localmente");
+      appData.transactions.unshift(newTx);
+      await pushDataToGitHub(`Registrar ${type === 'INCOME' ? 'cuota ' + newTx.department : 'gasto ' + newTx.category}`);
+      closeModal("modal-transaction");
+      document.getElementById("form-transaction").reset();
+
+      if (type === "INCOME") showReceipt(newTx);
+    }
+
+    // --- PROVEEDORES ---
+    function renderQuickProviders() {
+      const container = document.getElementById("quick-providers-list");
+      container.innerHTML = "";
+
+      const featured = appData.providers.filter(p => p.category === "Agua" || p.category === "Poda y Jardinería");
+      const displayList = featured.length > 0 ? featured.slice(0, 4) : appData.providers.slice(0, 4);
+
+      if (displayList.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-400 col-span-2 py-2">Sin proveedores registrados. Pulsa "Ver Directorio" para agregar pipa o poda.</div>`;
+        return;
       }
 
-      closeModal("modalTransaction");
-      document.getElementById("formTransaction").reset();
-      renderUI();
-
-      if (type === "INCOME") {
-        generateReceiptModal(newTx.id);
-      }
-    };
-
-    window.deleteTransaction = async function(txId) {
-      if (isCloudReady && db) {
-        try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'transactions', txId));
-          showToast("Movimiento eliminado en la nube");
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        state.transactions = state.transactions.filter(t => t.id !== txId);
-        saveLocalFallback();
-        showToast("Movimiento eliminado");
-      }
-      renderUI();
-    };
-
-    window.handleProviderSubmit = async function(e) {
-      e.preventDefault();
-      const category = document.getElementById("provCategory").value;
-      const name = document.getElementById("provName").value.trim();
-      const phone = document.getElementById("provPhone").value.trim();
-      const notes = document.getElementById("provNotes").value.trim();
-
-      const newProv = {
-        id: "prov-" + Date.now(),
-        category,
-        name,
-        phone,
-        notes
-      };
-
-      if (isCloudReady && db) {
-        try {
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'providers', newProv.id), newProv);
-          showToast("Proveedor añadido al directorio vecinal");
-        } catch (err) {
-          console.error(err);
-          state.providers.push(newProv);
-          saveLocalFallback();
-        }
-      } else {
-        state.providers.push(newProv);
-        saveLocalFallback();
-        showToast("Proveedor guardado");
-      }
-
-      closeModal("modalProvider");
-      document.getElementById("formProvider").reset();
-      renderUI();
-    };
-
-    window.deleteProvider = async function(provId) {
-      if (isCloudReady && db) {
-        try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'providers', provId));
-          showToast("Proveedor retirado");
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        state.providers = state.providers.filter(p => p.id !== provId);
-        saveLocalFallback();
-        showToast("Proveedor retirado");
-      }
-      renderUI();
-    };
-
-    window.handleDeptSubmit = async function(e) {
-      e.preventDefault();
-      const id = document.getElementById("deptIdInput").value.trim();
-      const owner = document.getElementById("deptOwnerInput").value.trim();
-      const phone = document.getElementById("deptPhoneInput").value.trim();
-
-      const newDept = { id, owner, phone };
-
-      if (isCloudReady && db) {
-        try {
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'departments', id), newDept);
-          showToast(`Depto ${id} agregado`);
-        } catch (err) {
-          console.error(err);
-          state.departments.push(newDept);
-          saveLocalFallback();
-        }
-      } else {
-        state.departments.push(newDept);
-        saveLocalFallback();
-        showToast(`Depto ${id} guardado`);
-      }
-
-      closeModal("modalDept");
-      document.getElementById("formDept").reset();
-      renderUI();
-    };
-
-    window.deleteDepartment = async function(deptId) {
-      if (isCloudReady && db) {
-        try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'departments', deptId));
-          showToast("Departamento eliminado");
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        state.departments = state.departments.filter(d => d.id !== deptId);
-        saveLocalFallback();
-        showToast("Departamento eliminado");
-      }
-      renderUI();
-    };
-
-    window.populateDeptSelectOptions = function() {
-      const select = document.getElementById("txDeptSelect");
-      if (!select) return;
-      select.innerHTML = "";
-      state.departments.forEach(d => {
-        const opt = document.createElement("option");
-        opt.value = d.id;
-        opt.textContent = `${d.id} - ${d.owner}`;
-        select.appendChild(opt);
+      displayList.forEach(p => {
+        const isWater = p.category === "Agua";
+        const cleanPhone = p.phone.replace(/\D/g, "");
+        const card = document.createElement("div");
+        card.className = "flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition";
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <div class="p-2 rounded-lg ${isWater ? 'bg-sky-100 text-sky-600' : 'bg-emerald-100 text-emerald-600'} flex-shrink-0">
+              <i data-lucide="${isWater ? 'droplets' : 'scissors'}" class="w-4 h-4"></i>
+            </div>
+            <div class="truncate">
+              <h4 class="text-xs font-bold text-slate-800 truncate">${p.name}</h4>
+              <p class="text-[11px] text-slate-500 truncate">${p.notes || p.phone}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0 ml-2">
+            <a href="tel:${cleanPhone}" class="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-indigo-600 shadow-sm transition" title="Llamar">
+              <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+            </a>
+            <a href="https://wa.me/521${cleanPhone}?text=${encodeURIComponent('Hola, nos comunicamos del edificio ' + appData.buildingName + ' para solicitar servicio.')}" target="_blank" class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 shadow-sm transition" title="WhatsApp">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+            </a>
+          </div>
+        `;
+        container.appendChild(card);
       });
-      autoFillResidentFromDept();
-    };
+      lucide.createIcons();
+    }
 
-    window.autoFillResidentFromDept = function() {
-      const select = document.getElementById("txDeptSelect");
-      const residentInput = document.getElementById("txResidentName");
-      if (!select || !residentInput) return;
-      const found = state.departments.find(d => d.id === select.value);
-      if (found) {
-        residentInput.value = found.owner;
-      }
-    };
+    function renderFullProviders() {
+      const container = document.getElementById("full-providers-list");
+      container.innerHTML = "";
 
-    window.populateProviderOptions = function() {
-      const select = document.getElementById("txProviderSelect");
-      if (!select) return;
-      const cat = document.getElementById("txExpenseCategory")?.value || "Agua";
-      select.innerHTML = `<option value="">-- Seleccionar de mis proveedores guardados --</option>`;
+      appData.providers.forEach((p, idx) => {
+        const isWater = p.category === "Agua";
+        const isPrune = p.category === "Poda y Jardinería";
+        const cleanPhone = p.phone.replace(/\D/g, "");
 
-      const matches = state.providers.filter(p => p.category === cat || cat === "Otros");
-      (matches.length > 0 ? matches : state.providers).forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p.name;
-        opt.textContent = `${p.name} (${p.phone})`;
-        select.appendChild(opt);
+        const card = document.createElement("div");
+        card.className = "p-3.5 rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between space-y-3";
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                isWater ? 'bg-sky-50 text-sky-700 border border-sky-200' :
+                isPrune ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                'bg-slate-100 text-slate-700'
+              }">${p.category}</span>
+              <button onclick="deleteProvider(${idx})" class="text-slate-300 hover:text-rose-500 transition p-1">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <h3 class="font-bold text-sm text-slate-900">${p.name}</h3>
+            <p class="text-xs text-slate-500 mt-0.5">${p.notes || 'Sin observaciones'}</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-700 flex items-center gap-1">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i> ${p.phone}
+            </span>
+            <div class="flex gap-1.5">
+              <a href="tel:${cleanPhone}" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1">
+                <i data-lucide="phone-call" class="w-3.5 h-3.5"></i> Llamar
+              </a>
+              <a href="https://wa.me/521${cleanPhone}?text=${encodeURIComponent('Hola, nos comunicamos del edificio ' + appData.buildingName + ' para solicitar información.')}" target="_blank" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 shadow">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
+              </a>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
       });
-    };
+      lucide.createIcons();
+    }
 
-    window.filterProviderQuickSelect = function() {
-      populateProviderOptions();
-      const cat = document.getElementById("txExpenseCategory").value;
-      const notes = document.getElementById("txNotes");
-      if (cat === "Agua") {
-        notes.placeholder = "Pipa de agua 10,000L para cisterna";
-      } else if (cat === "Poda y Jardinería") {
-        notes.placeholder = "Poda de áreas verdes y jardineras";
+    async function handleProviderSubmit(e) {
+      e.preventDefault();
+      const category = document.getElementById("new-prov-category").value;
+      const name = document.getElementById("new-prov-name").value.trim();
+      const phone = document.getElementById("new-prov-phone").value.trim();
+      const notes = document.getElementById("new-prov-notes").value.trim();
+
+      if (name && phone) {
+        appData.providers.push({ id: "prov-" + Date.now(), category, name, phone, notes });
+        await pushDataToGitHub(`Agregar proveedor ${name}`);
+        closeModal("modal-provider");
+        document.getElementById("form-provider").reset();
+        renderFullProviders();
       }
-    };
+    }
 
-    window.applyProviderToConcept = function() {
-      const val = document.getElementById("txProviderSelect").value;
-      if (val) {
-        document.getElementById("txProviderCustom").value = val;
+    async function deleteProvider(idx) {
+      if (confirm("¿Deseas eliminar este proveedor?")) {
+        const deleted = appData.providers.splice(idx, 1);
+        await pushDataToGitHub(`Eliminar proveedor ${deleted[0].name}`);
+        renderFullProviders();
       }
-    };
+    }
 
-    window.registerCuotaForDept = function(deptId) {
-      openTransactionModal("INCOME");
-      document.getElementById("txDeptSelect").value = deptId;
-      autoFillResidentFromDept();
-      document.getElementById("txAmount").value = state.config.defaultFee || 500;
-      document.getElementById("txNotes").value = `Cuota mensual ordinaria (${deptId})`;
-    };
+    // --- COMPROBANTE Y WHATSAPP ---
+    function showReceipt(tx) {
+      const deptObj = appData.departments.find(d => d.id === tx.department);
+      const phone = deptObj ? deptObj.phone : "";
+      
+      const textMessage = `*RECIBO DE PAGO - ${appData.buildingName.toUpperCase()}*\n` +
+        `--------------------------------\n` +
+        `*Folio:* ${tx.id}\n` +
+        `*Fecha:* ${tx.date}\n` +
+        `*Departamento:* ${tx.department}\n` +
+        `*Vecino:* ${tx.resident}\n` +
+        `*Monto:* $${tx.amount.toFixed(2)} MXN\n` +
+        `*Concepto:* ${tx.notes || 'Cuota de Mantenimiento'}\n` +
+        `--------------------------------\n` +
+        `_¡Gracias por su puntual aportación!_`;
 
-    window.generateReceiptModal = function(txId) {
-      const tx = state.transactions.find(t => t.id === txId);
-      if (!tx) return;
+      document.getElementById("receipt-bldg-label").innerText = appData.buildingName;
+      document.getElementById("receipt-content").innerHTML = `
+        <div class="font-bold border-b border-slate-200 pb-1 text-slate-900">${appData.buildingName}</div>
+        <div><strong>Folio:</strong> ${tx.id}</div>
+        <div><strong>Fecha:</strong> ${tx.date}</div>
+        <div><strong>Depto:</strong> ${tx.department}</div>
+        <div><strong>Residente:</strong> ${tx.resident}</div>
+        <div><strong>Concepto:</strong> ${tx.notes || 'Cuota de Mantenimiento'}</div>
+        <div class="text-base font-black text-emerald-700 pt-1 border-t border-slate-200">Total: $${tx.amount.toFixed(2)}</div>
+      `;
 
-      const dept = state.departments.find(d => d.id === tx.department);
-      const cleanPhone = (dept?.phone || "").replace(/\D/g, "");
+      const encodedMsg = encodeURIComponent(textMessage);
+      const waBtn = document.getElementById("btn-whatsapp-share");
+      waBtn.href = phone ? `https://wa.me/521${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
 
-      const textMsg = 
-`🏢 *COMPROBANTE DE APORTACIÓN VECINAL* 🏢
-Condominio: *${state.config.buildingName}*
-----------------------------------------
-• *Folio:* #${tx.id.slice(-6).toUpperCase()}
-• *Fecha:* ${formatDate(tx.date)}
-• *Departamento:* ${tx.department}
-• *Vecino:* ${tx.resident || 'Condómino'}
-• *Concepto:* ${tx.notes || 'Cuota de Mantenimiento'}
-• *MONTO RECIBIDO:* ${formatMoney(tx.amount)} MXN
-----------------------------------------
-✅ *ESTADO: Aportación registrada en el fondo comunitario.*
-_Agradecemos su cooperación para el pago puntual de pipas de agua, poda y mantenimiento del inmueble._`;
+      openModal("modal-receipt");
+    }
 
-      document.getElementById("receiptContent").textContent = textMsg;
-      const waBtn = document.getElementById("btnSendWhatsAppReceipt");
-      const encoded = encodeURIComponent(textMsg);
-      waBtn.href = cleanPhone ? `https://wa.me/521${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+    // --- AJUSTES Y DEPARTAMENTOS ---
+    function loadSettingsInputs() {
+      document.getElementById("gh-owner").value = ghConfig.owner || "";
+      document.getElementById("gh-repo").value = ghConfig.repo || "";
+      document.getElementById("gh-token").value = ghConfig.token || "";
 
-      openModal("modalReceipt");
-    };
+      document.getElementById("setting-bldg-name").value = appData.buildingName || "";
+      document.getElementById("setting-default-fee").value = appData.defaultFee || 500;
+      renderDeptSettingsList();
+    }
 
-    // Navigation and Modals handlers
-    window.navTo = function(viewId) {
-      const views = ["dashboard", "movements", "providers", "settings"];
-      views.forEach(v => {
-        const sec = document.getElementById(`view-${v}`);
-        const tabBtn = document.getElementById(`tabBtn-${v}`);
-        const mobBtn = document.getElementById(`mobileNav-${v}`);
+    async function saveBuildingSettings() {
+      const name = document.getElementById("setting-bldg-name").value.trim();
+      const fee = parseFloat(document.getElementById("setting-default-fee").value) || 0;
+      if (name) {
+        appData.buildingName = name;
+        appData.defaultFee = fee;
+        await pushDataToGitHub("Actualizar datos del edificio");
+        alert("¡Datos del condominio actualizados!");
+      }
+    }
 
-        if (v === viewId) {
-          sec?.classList.remove("hidden");
-          tabBtn?.classList.add("bg-slate-900", "text-white");
-          tabBtn?.classList.remove("text-slate-600");
-          mobBtn?.classList.add("text-sky-600");
-          mobBtn?.classList.remove("text-slate-400");
+    function renderDeptSettingsList() {
+      const container = document.getElementById("departments-list");
+      container.innerHTML = "";
+
+      appData.departments.forEach((dept, index) => {
+        const item = document.createElement("div");
+        item.className = "flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl";
+        item.innerHTML = `
+          <div>
+            <span class="font-bold text-slate-800 text-sm">${dept.id}</span>
+            <p class="text-xs text-slate-500">${dept.owner} ${dept.phone ? '• 📱 ' + dept.phone : ''}</p>
+          </div>
+          <button onclick="deleteDepartment(${index})" class="text-slate-400 hover:text-rose-600 p-1.5 transition">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+        container.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    async function handleDeptSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById("new-dept-id").value.trim();
+      const owner = document.getElementById("new-dept-owner").value.trim();
+      const phone = document.getElementById("new-dept-phone").value.trim();
+
+      if (id && owner) {
+        appData.departments.push({ id, owner, phone });
+        await pushDataToGitHub(`Agregar departamento ${id}`);
+        closeModal("modal-dept");
+        document.getElementById("form-dept").reset();
+        renderDeptSettingsList();
+      }
+    }
+
+    async function deleteDepartment(index) {
+      if (confirm("¿Deseas eliminar este departamento?")) {
+        const deleted = appData.departments.splice(index, 1);
+        await pushDataToGitHub(`Eliminar departamento ${deleted[0].id}`);
+        renderDeptSettingsList();
+      }
+    }
+
+    // --- ACTUALIZACIÓN DE INTERFAZ & CÁLCULOS ---
+    function updateUI() {
+      document.getElementById("header-bldg-name").innerText = appData.buildingName || "Mi Edificio";
+
+      let income = 0;
+      let expense = 0;
+      let incomeCount = 0;
+      let expenseCount = 0;
+      const categoryTotals = {};
+      const currentMonthStr = new Date().toISOString().slice(0, 7);
+      const paidDeptsThisMonth = new Set();
+
+      appData.transactions.forEach(t => {
+        if (t.type === "INCOME") {
+          income += t.amount;
+          incomeCount++;
+          if (t.date && t.date.startsWith(currentMonthStr)) {
+            paidDeptsThisMonth.add(t.department);
+          }
         } else {
-          sec?.classList.add("hidden");
-          tabBtn?.classList.remove("bg-slate-900", "text-white");
-          tabBtn?.classList.add("text-slate-600");
-          mobBtn?.classList.remove("text-sky-600");
-          mobBtn?.classList.add("text-slate-400");
+          expense += t.amount;
+          expenseCount++;
+          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
         }
       });
-      lucide.createIcons();
-    };
 
-    window.openModal = function(id) {
-      document.getElementById(id)?.classList.remove("hidden");
-      lucide.createIcons();
-    };
+      const balance = income - expense;
+      document.getElementById("total-balance").innerText = `$${balance.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+      document.getElementById("total-income").innerText = `$${income.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+      document.getElementById("total-expense").innerText = `$${expense.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+      document.getElementById("income-count").innerText = `${incomeCount} cuotas registradas`;
+      document.getElementById("expense-count").innerText = `${expenseCount} pagos de servicios`;
 
-    window.closeModal = function(id) {
-      document.getElementById(id)?.classList.add("hidden");
-    };
+      const totalDepts = appData.departments.length;
+      const paidCount = paidDeptsThisMonth.size;
+      const pendingCount = Math.max(0, totalDepts - paidCount);
+      const pct = totalDepts > 0 ? Math.round((paidCount / totalDepts) * 100) : 0;
 
-    window.openTransactionModal = function(type = "INCOME") {
-      document.getElementById("formTransaction").reset();
-      document.getElementById("txDate").value = new Date().toISOString().split("T")[0];
-      document.getElementById("txAmount").value = state.config.defaultFee || 500;
-      setMovementType(type);
-      populateDeptSelectOptions();
-      populateProviderOptions();
-      openModal("modalTransaction");
-    };
+      document.getElementById("compliance-badge").innerText = `${pct}%`;
+      document.getElementById("compliance-progress").style.width = `${pct}%`;
+      document.getElementById("paid-depts-count").innerText = `${paidCount} de ${totalDepts}`;
+      document.getElementById("pending-depts-count").innerText = `${pendingCount}`;
 
-    window.openProviderModal = function() {
-      document.getElementById("formProvider").reset();
-      openModal("modalProvider");
-    };
+      const recentList = document.getElementById("recent-list");
+      recentList.innerHTML = "";
+      const recents = appData.transactions.slice(0, 5);
 
-    window.openDeptModal = function() {
-      document.getElementById("formDept").reset();
-      openModal("modalDept");
-    };
-
-    window.openShareModal = function() {
-      const input = document.getElementById("shareUrlInput");
-      const url = window.location.href;
-      input.value = url;
-
-      const text = encodeURIComponent(`Hola vecinos, aquí pueden consultar y llevar el control en tiempo real de los gastos (pipas de agua, poda) y aportaciones de nuestro edificio ${state.config.buildingName}:\n${url}`);
-      document.getElementById("btnShareWhatsAppGroup").href = `https://wa.me/?text=${text}`;
-
-      openModal("modalShareApp");
-    };
-
-    window.copyShareLink = function() {
-      const input = document.getElementById("shareUrlInput");
-      input.select();
-      try {
-        document.execCommand("copy");
-        showToast("Enlace copiado al portapapeles");
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    window.setMovementType = function(type) {
-      document.getElementById("txType").value = type;
-      const bIncome = document.getElementById("btnTabIncome");
-      const bExpense = document.getElementById("btnTabExpense");
-      const fIncome = document.getElementById("incomeFieldsBlock");
-      const fExpense = document.getElementById("expenseFieldsBlock");
-
-      if (type === "INCOME") {
-        bIncome.className = "py-2 rounded-lg text-xs font-bold transition shadow bg-white text-sky-600 flex items-center justify-center gap-1.5";
-        bExpense.className = "py-2 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-slate-900 flex items-center justify-center gap-1.5";
-        fIncome.classList.remove("hidden");
-        fExpense.classList.add("hidden");
-        document.getElementById("txResidentName").setAttribute("required", "true");
-        document.getElementById("txNotes").placeholder = "Ej. Cuota ordinaria del mes";
+      if (recents.length === 0) {
+        recentList.innerHTML = `<div class="p-6 text-center text-xs text-slate-400">Sin movimientos registrados.</div>`;
       } else {
-        bExpense.className = "py-2 rounded-lg text-xs font-bold transition shadow bg-white text-rose-600 flex items-center justify-center gap-1.5";
-        bIncome.className = "py-2 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-slate-900 flex items-center justify-center gap-1.5";
-        fExpense.classList.remove("hidden");
-        fIncome.classList.add("hidden");
-        document.getElementById("txResidentName").removeAttribute("required");
-        filterProviderQuickSelect();
+        recents.forEach(tx => recentList.appendChild(createTxRow(tx)));
+      }
+
+      renderQuickProviders();
+      renderChart(categoryTotals);
+      lucide.createIcons();
+    }
+
+    function createTxRow(tx) {
+      const isIncome = tx.type === "INCOME";
+      const div = document.createElement("div");
+      div.className = "p-3.5 flex items-center justify-between hover:bg-slate-50 transition";
+      div.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="p-2 rounded-xl ${isIncome ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'}">
+            <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="font-bold text-xs text-slate-800">${isIncome ? tx.department + ' • ' + tx.resident : tx.category}</div>
+            <div class="text-[11px] text-slate-400">${tx.date} • ${tx.notes || (isIncome ? 'Cuota' : tx.provider)}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="font-bold text-xs ${isIncome ? 'text-indigo-600' : 'text-rose-600'}">
+            ${isIncome ? '+' : '-'}$${tx.amount.toFixed(2)}
+          </div>
+          <button onclick="deleteTransaction('${tx.id}')" class="text-[10px] text-slate-400 hover:text-rose-500 transition">Eliminar</button>
+        </div>
+      `;
+      return div;
+    }
+
+    function renderTransactions() {
+      const filterType = document.getElementById("filter-type").value;
+      const filterCat = document.getElementById("filter-category").value;
+      const container = document.getElementById("all-transactions-list");
+      container.innerHTML = "";
+
+      const filtered = appData.transactions.filter(t => {
+        if (filterType !== "ALL" && t.type !== filterType) return false;
+        if (filterCat !== "ALL" && t.category !== filterCat) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-400">No se encontraron movimientos.</div>`;
+      } else {
+        filtered.forEach(tx => container.appendChild(createTxRow(tx)));
       }
       lucide.createIcons();
-    };
-
-    // Helper functions
-    function formatMoney(n) {
-      return new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: 'MXN'
-      }).format(n || 0);
     }
 
-    function formatDate(str) {
-      if (!str) return '';
-      const [y, m, d] = str.split('-');
-      return `${d}/${m}/${y}`;
+    async function deleteTransaction(id) {
+      if (confirm("¿Deseas eliminar este registro?")) {
+        appData.transactions = appData.transactions.filter(t => t.id !== id);
+        await pushDataToGitHub("Eliminar transacción contable");
+        renderTransactions();
+      }
     }
 
-    function escapeHtml(s) {
-      if (!s) return '';
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    function renderChart(categoryTotals) {
+      const canvas = document.getElementById("expenseChart");
+      const placeholder = document.getElementById("chart-placeholder");
+      const labels = Object.keys(categoryTotals);
+      const data = Object.values(categoryTotals);
+
+      if (labels.length === 0) {
+        canvas.style.display = "none";
+        placeholder.classList.remove("hidden");
+        return;
+      } else {
+        canvas.style.display = "block";
+        placeholder.classList.add("hidden");
+      }
+
+      if (expenseChartInstance) expenseChartInstance.destroy();
+
+      expenseChartInstance = new Chart(canvas, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: ["#38bdf8", "#4ade80", "#fbbf24", "#f87171", "#a78bfa", "#94a3b8"],
+            borderWidth: 2,
+            borderColor: "#ffffff"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } }
+          },
+          cutout: "68%"
+        }
+      });
     }
 
-    function showToast(msg) {
-      const toast = document.getElementById("toastMessage");
-      const text = document.getElementById("toastText");
-      if (!toast || !text) return;
-      text.textContent = msg;
-      toast.classList.remove("translate-y-24", "opacity-0");
-      setTimeout(() => {
-        toast.classList.add("translate-y-24", "opacity-0");
-      }, 2800);
-    }
-
-    window.exportCSV = function() {
-      let csv = "Folio,Tipo,Fecha,Departamento_o_Categoria,Residente_o_Proveedor,Monto,Concepto\n";
-      state.transactions.forEach(t => {
+    function exportToCSV() {
+      let csv = "ID,Tipo,Fecha,Departamento_o_Categoria,Residente_o_Proveedor,Monto,Concepto\n";
+      appData.transactions.forEach(t => {
         const itemCat = t.type === "INCOME" ? t.department : t.category;
         const resp = t.type === "INCOME" ? t.resident : t.provider;
         csv += `"${t.id}","${t.type}","${t.date}","${itemCat}","${resp || ''}","${t.amount}","${t.notes || ''}"\n`;
@@ -1615,16 +1124,16 @@ _Agradecemos su cooperación para el pago puntual de pipas de agua, poda y mante
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Cuentas_${state.config.buildingName.replace(/\s+/g, '_')}_${new Date().toISOString().split("T")[0]}.csv`;
-      a.click();
-    };
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Cuentas_${appData.buildingName.replace(/\s+/g, '_')}_${new Date().toISOString().split("T")[0]}.csv`);
+      link.click();
+    }
 
-    // Initialize once DOM is ready
+    // Inicialización y auto-recarga cada 30 segundos
     document.addEventListener("DOMContentLoaded", () => {
-      initFirebase();
-      renderUI();
+      syncDataFromGitHub();
+      setInterval(syncDataFromGitHub, 30000); // Mantiene sincronizados a los vecinos cada 30 segundos automáticamente
     });
   </script>
 </body>
