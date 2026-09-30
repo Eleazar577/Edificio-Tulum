@@ -13,65 +13,88 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style type="text/tailwindcss">
 @layer components{
- .inp{@apply w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-indigo-500}
+ .inp{@apply w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-indigo-500 bg-white}
  .lbl{@apply block text-xs font-semibold text-slate-600 mb-1}
  .card{@apply bg-white p-4 rounded-2xl shadow-sm border border-slate-200}
- .btn{@apply bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition}
- .modal{@apply fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4}
+ .btn{@apply bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center justify-center gap-1.5 shrink-0}
+ .modal{@apply fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3}
  .box{@apply bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-3 max-h-[92vh] overflow-y-auto}
  .h2{@apply font-bold text-base text-slate-900 flex items-center gap-2}
 }
 .no-scrollbar::-webkit-scrollbar{display:none}
 </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-24">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-28">
 
+<!-- Header Superior -->
 <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
- <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-  <div class="flex items-center gap-3">
-   <div class="p-2 bg-indigo-600 rounded-xl"><i data-lucide="building-2" class="w-6 h-6"></i></div>
-   <div>
-    <h1 id="header-bldg-name" class="font-bold text-lg leading-tight truncate max-w-[150px] sm:max-w-xs">Mi Edificio</h1>
-    <div class="flex items-center gap-2 text-xs text-slate-400">
-     <span class="flex items-center gap-1"><span id="sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span><span id="sync-text">Conectando...</span></span>
+ <div class="max-w-4xl mx-auto px-3.5 py-2.5 flex items-center justify-between gap-2">
+  <div class="flex items-center gap-2.5 min-w-0">
+   <button onclick="navTo('dashboard')" class="p-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl shrink-0" title="Ir al Inicio">
+    <i data-lucide="building-2" class="w-5 h-5"></i>
+   </button>
+   <div class="min-w-0">
+    <h1 id="header-bldg-name" class="font-bold text-sm sm:text-base leading-tight truncate">Mi Edificio</h1>
+    <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+     <span class="flex items-center gap-1"><span id="sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span><span id="sync-text" class="truncate max-w-[85px] sm:max-w-none">Conectando...</span></span>
      <span>•</span>
-     <button onclick="openModal('modal-profile')" class="text-indigo-400 font-medium truncate max-w-[110px] sm:max-w-none flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i><span id="header-user-name">Identificarse</span></button>
+     <button onclick="openModal('modal-profile')" class="text-indigo-400 hover:underline font-medium truncate max-w-[95px] sm:max-w-none flex items-center gap-1">
+      <i data-lucide="user" class="w-3 h-3 shrink-0"></i><span id="header-user-name">Identificarse</span>
+     </button>
     </div>
    </div>
   </div>
-  <div class="flex items-center gap-1.5">
+  <div class="flex items-center gap-1.5 shrink-0">
    <div class="relative">
     <button onclick="togglePanel()" title="Notificaciones" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl relative">
      <i data-lucide="bell" class="w-4 h-4"></i>
-     <span id="bell-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">0</span>
+     <span id="bell-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center hidden">0</span>
     </button>
     <div id="panel-notifications" class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 z-50 p-4 hidden space-y-3">
      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
       <h4 class="font-bold text-xs text-slate-700">Notificaciones</h4>
       <button onclick="markRead()" class="text-[11px] text-slate-400 hover:text-indigo-600 font-medium">Marcar leídas</button>
      </div>
-     <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-      <div><span class="font-bold block">Alertas en este dispositivo</span><span id="notif-status" class="text-[11px] text-slate-500"></span></div>
-      <button onclick="askNotifPermission()" class="btn !px-2.5 !py-1.5">Activar</button>
+     <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+      <div><span class="font-bold block text-[11px]">Alertas del equipo</span><span id="notif-status" class="text-[10px] text-slate-500"></span></div>
+      <button onclick="askNotifPermission()" class="btn !px-2.5 !py-1 text-[11px]">Activar</button>
      </div>
-     <div class="flex justify-between items-center"><span class="text-xs font-semibold text-slate-600">Aviso fijado</span><button onclick="newNotice()" class="text-xs text-indigo-600 font-bold">+ Emitir aviso</button></div>
+     <div class="flex justify-between items-center"><span class="text-xs font-semibold text-slate-600">Aviso activo</span><button onclick="openModal('modal-notice')" class="text-xs text-indigo-600 font-bold">+ Crear aviso</button></div>
      <p id="panel-notice" class="text-xs text-slate-500 italic bg-amber-50 p-2 rounded-lg border border-amber-200"></p>
      <div id="panel-feed" class="max-h-48 overflow-y-auto space-y-1.5 text-xs no-scrollbar"></div>
     </div>
    </div>
-   <button onclick="copyMagicLink()" class="p-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center gap-1 text-xs font-semibold"><i data-lucide="share-2" class="w-4 h-4"></i><span class="hidden sm:inline">Invitar</span></button>
    <button onclick="sync()" title="Refrescar" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-   <button onclick="openModal('modal-transaction')" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-4 h-4"></i><span>Registrar</span></button>
+   <button onclick="openModal('modal-transaction')" class="btn !bg-indigo-600 hover:!bg-indigo-700 !px-2.5 sm:!px-3 !py-2 text-xs">
+    <i data-lucide="plus-circle" class="w-4 h-4"></i><span class="hidden xs:inline">Registrar</span>
+   </button>
   </div>
  </div>
 </header>
 
+<!-- Barra de regreso para vistas secundarias -->
+<div id="sub-header-bar" class="max-w-4xl mx-auto px-4 pt-3 hidden">
+ <button onclick="navTo('dashboard')" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 shadow-sm transition">
+  <i data-lucide="arrow-left" class="w-4 h-4 text-indigo-600"></i>
+  <span>Menú Principal / Volver</span>
+ </button>
+</div>
+
+<!-- Banners informativos y avisos vigentes -->
 <div id="urgent-banner" class="max-w-4xl mx-auto px-4 pt-3 hidden">
  <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-between gap-3">
-  <div class="text-xs leading-tight"><strong class="block text-[10px] uppercase tracking-wider text-white/90">Aviso del edificio</strong><span id="urgent-text" class="font-medium text-sm"></span><span id="urgent-meta" class="block text-[10px] text-white/80 mt-0.5"></span></div>
-  <button onclick="$('urgent-banner').classList.add('hidden')" class="p-1.5 hover:bg-white/20 rounded-lg" title="Ocultar"><i data-lucide="x" class="w-4 h-4"></i></button>
+  <div class="text-xs leading-tight min-w-0">
+   <div class="flex items-center gap-2 mb-0.5">
+    <strong class="text-[10px] uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded font-bold">Aviso vigente</strong>
+    <span id="urgent-expires" class="text-[10px] text-white/90"></span>
+   </div>
+   <span id="urgent-text" class="font-medium text-sm block"></span>
+   <span id="urgent-meta" class="block text-[10px] text-white/80 mt-0.5"></span>
+  </div>
+  <button onclick="dismissUrgentNotice()" class="p-1.5 hover:bg-white/20 rounded-lg shrink-0" title="Cerrar aviso"><i data-lucide="x" class="w-4 h-4"></i></button>
  </div>
 </div>
+
 <div id="low-banner" class="max-w-4xl mx-auto px-4 pt-3 hidden">
  <div class="bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-3.5 text-xs"><strong class="block text-sm">Fondo de reserva bajo</strong><p id="low-text"></p></div>
 </div>
@@ -79,17 +102,48 @@
  <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 text-xs text-amber-900"><strong class="block text-sm">Aplicación sin conectar</strong><p>Configura tu repositorio en Ajustes o abre el enlace de invitación.</p><button onclick="navTo('settings')" class="underline font-bold text-indigo-700 mt-1">Abrir Ajustes</button></div>
 </div>
 
-<main class="max-w-4xl mx-auto px-4 py-4 space-y-4">
+<main class="max-w-4xl mx-auto px-4 py-3 space-y-4">
+ 
+ <!-- VISTA: DASHBOARD -->
  <section id="view-dashboard" class="space-y-4">
   <div class="card !py-2.5 flex items-center justify-between text-xs text-slate-600">
    <span class="truncate"><strong>Última acción:</strong> <span id="dash-last"></span></span>
-   <button onclick="navTo('activities')" class="text-indigo-600 font-semibold ml-2 flex-shrink-0">Ver bitácora</button>
+   <button onclick="navTo('activities')" class="text-indigo-600 font-semibold ml-2 flex-shrink-0 hover:underline">Bitácora</button>
   </div>
+
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
    <div class="card"><span class="text-xs font-semibold text-slate-500">Fondo en caja</span><h2 id="total-balance" class="text-2xl font-black text-slate-900">$0.00</h2></div>
    <div class="card"><span class="text-xs font-semibold text-slate-500">Total recaudado</span><h2 id="total-income" class="text-2xl font-black text-indigo-600">$0.00</h2><span id="income-count" class="text-[11px] text-slate-400"></span></div>
    <div class="card"><span class="text-xs font-semibold text-slate-500">Total gastado</span><h2 id="total-expense" class="text-2xl font-black text-rose-600">$0.00</h2><span id="expense-count" class="text-[11px] text-slate-400"></span></div>
   </div>
+
+  <!-- Tarjeta del Sistema de Turnos de Pipas y Poda -->
+  <div class="card border-indigo-100 bg-gradient-to-br from-white to-indigo-50/40">
+   <div class="flex justify-between items-center mb-3">
+    <div>
+     <h3 class="font-bold text-sm text-slate-800 flex items-center gap-1.5"><i data-lucide="rotate-cw" class="w-4 h-4 text-indigo-600"></i> Sistema de Rol: Pipas y Poda</h3>
+     <p class="text-[11px] text-slate-500">Control de quién solicitó el último servicio para rotar turnos.</p>
+    </div>
+    <button onclick="navTo('turns')" class="text-xs font-semibold text-indigo-600 hover:underline">Ver historial</button>
+   </div>
+   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+     <div class="flex justify-between items-center">
+      <span class="text-xs font-bold text-slate-700 flex items-center gap-1"><i data-lucide="droplet" class="w-3.5 h-3.5 text-sky-500"></i> Pipa de Agua</span>
+      <button onclick="openTurnModal('Agua')" class="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg hover:bg-indigo-100">+ Solicitar</button>
+     </div>
+     <div id="role-summary-water" class="text-xs text-slate-600">Sin registros de pipa.</div>
+    </div>
+    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+     <div class="flex justify-between items-center">
+      <span class="text-xs font-bold text-slate-700 flex items-center gap-1"><i data-lucide="scissors" class="w-3.5 h-3.5 text-emerald-600"></i> Poda y Jardín</span>
+      <button onclick="openTurnModal('Poda')" class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100">+ Solicitar</button>
+     </div>
+     <div id="role-summary-pruning" class="text-xs text-slate-600">Sin registros de poda.</div>
+    </div>
+   </div>
+  </div>
+
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
    <div class="card flex flex-col items-center">
     <h3 class="font-bold text-sm text-slate-700 mb-2 self-start">Gastos por categoría</h3>
@@ -105,27 +159,51 @@
     </div>
    </div>
   </div>
+
   <div class="card">
-   <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-sm">Servicios rápidos</h3><button onclick="navTo('providers')" class="text-xs text-indigo-600 font-semibold">Ver directorio</button></div>
-   <div id="quick-providers" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+   <div class="flex justify-between items-center mb-3">
+    <h3 class="font-bold text-sm">Servicios rápidos</h3>
+    <button onclick="navTo('providers')" class="text-xs text-indigo-600 font-semibold hover:underline">Ver directorio completo</button>
+   </div>
+   <div id="quick-providers" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
   </div>
+
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-   <div class="p-4 border-b border-slate-100 flex justify-between items-center"><h3 class="font-bold text-sm">Movimientos recientes</h3><button onclick="navTo('transactions')" class="text-xs font-semibold text-indigo-600">Ver todo</button></div>
+   <div class="p-3.5 border-b border-slate-100 flex justify-between items-center"><h3 class="font-bold text-sm">Movimientos recientes</h3><button onclick="navTo('transactions')" class="text-xs font-semibold text-indigo-600 hover:underline">Ver todo</button></div>
    <div id="recent-list" class="divide-y divide-slate-100"></div>
   </div>
  </section>
 
+ <!-- VISTA: ROL DE PIPAS Y PODA -->
+ <section id="view-turns" class="hidden space-y-4">
+  <div class="card space-y-3">
+   <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+    <div>
+     <h2 class="h2"><i data-lucide="rotate-cw" class="w-5 h-5 text-indigo-600"></i> Sistema de Rol (Pipas y Poda)</h2>
+     <p class="text-xs text-slate-500">Historial de solicitudes para llevar el orden rotativo del edificio.</p>
+    </div>
+    <div class="flex gap-2">
+     <button onclick="openTurnModal('Agua')" class="btn !bg-sky-600 hover:!bg-sky-700"><i data-lucide="droplet" class="w-4 h-4"></i> Pedir Pipa</button>
+     <button onclick="openTurnModal('Poda')" class="btn !bg-emerald-600 hover:!bg-emerald-700"><i data-lucide="scissors" class="w-4 h-4"></i> Pedir Poda</button>
+    </div>
+   </div>
+   <div id="turns-list" class="space-y-2.5 pt-1"></div>
+  </div>
+ </section>
+
+ <!-- VISTA: MOVIMIENTOS -->
  <section id="view-transactions" class="hidden space-y-3">
   <div class="card flex flex-wrap gap-2 items-center justify-between">
-   <div class="flex gap-2">
+   <div class="flex flex-wrap gap-2">
     <select id="filter-type" onchange="renderTx()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg p-2"><option value="ALL">Todos</option><option value="INCOME">Cooperaciones</option><option value="EXPENSE">Gastos</option></select>
     <select id="filter-category" onchange="renderTx()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg p-2"></select>
    </div>
-   <button onclick="exportCSV()" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">Exportar CSV</button>
+   <button onclick="exportCSV()" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar CSV</button>
   </div>
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"><div id="all-tx" class="divide-y divide-slate-100"></div></div>
  </section>
 
+ <!-- VISTA: BITÁCORA -->
  <section id="view-activities" class="hidden">
   <div class="card space-y-3">
    <div class="border-b border-slate-100 pb-3"><h2 class="h2">Bitácora de actividades</h2><p class="text-xs text-slate-500">Quién registró o modificó datos.</p></div>
@@ -133,91 +211,160 @@
   </div>
  </section>
 
+ <!-- VISTA: PROVEEDORES / SERVICIOS -->
  <section id="view-providers" class="hidden">
   <div class="card space-y-4">
-   <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-    <div><h2 class="h2">Directorio de servicios</h2><p class="text-xs text-slate-500">Pipas, poda y fontanería.</p></div>
-    <button onclick="openModal('modal-provider')" class="btn">Nuevo proveedor</button>
+   <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+    <div><h2 class="h2">Directorio de servicios</h2><p class="text-xs text-slate-500">Pipas, poda, fontanería y electricistas.</p></div>
+    <button onclick="openModal('modal-provider')" class="btn"><i data-lucide="plus" class="w-4 h-4"></i> Nuevo proveedor</button>
    </div>
    <div id="full-providers" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
   </div>
  </section>
 
+ <!-- VISTA: AJUSTES -->
  <section id="view-settings" class="hidden space-y-4">
   <div class="card space-y-3">
-   <h2 class="h2">Notificaciones del sistema</h2>
+   <div class="flex justify-between items-center"><h2 class="h2">Mi identificador</h2><button onclick="openModal('modal-profile')" class="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1.5 rounded-xl hover:bg-indigo-100">Cambiar</button></div>
+   <div class="bg-slate-50 p-3 rounded-xl flex justify-between items-center text-xs"><strong id="settings-identity" class="text-indigo-700"></strong><span id="settings-device" class="font-mono text-slate-400"></span></div>
+  </div>
+
+  <div class="card space-y-3">
+   <div class="flex justify-between items-center">
+    <h2 class="h2">Departamentos Registrados</h2>
+    <button onclick="openModal('modal-dept')" class="btn !bg-slate-900 hover:!bg-black"><i data-lucide="plus" class="w-4 h-4"></i> Añadir Departamento</button>
+   </div>
+   <p class="text-xs text-slate-500">Administra o amplía la lista de condóminos.</p>
+   <div id="departments" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+  </div>
+
+  <div class="card space-y-3">
+   <h2 class="h2">Datos del edificio</h2>
+   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div><label class="lbl">Nombre del Edificio / Condominio</label><input id="set-name" class="inp" maxlength="80" /></div>
+    <div><label class="lbl">Cuota ordinaria mensual ($ MXN)</label><input id="set-fee" type="number" min="0" class="inp" /></div>
+   </div>
+   <button onclick="saveBuilding()" class="btn">Guardar datos del edificio</button>
+  </div>
+
+  <div class="card space-y-3">
+   <h2 class="h2">Notificaciones</h2>
    <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
     <span id="settings-notif" class="text-xs text-slate-500"></span>
-    <div class="flex gap-2"><button onclick="testNotif()" class="text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-300">Probar</button><button onclick="askNotifPermission()" class="btn">Solicitar permiso</button></div>
+    <div class="flex gap-2">
+     <button onclick="testNotif()" class="text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100">Probar</button>
+     <button onclick="askNotifPermission()" class="btn">Solicitar permiso</button>
+    </div>
    </div>
-   <p class="text-[11px] text-slate-400">Las alertas solo llegan mientras la app está abierta.</p>
   </div>
-  <div class="card space-y-3">
-   <div class="flex justify-between items-center"><h2 class="h2">Mi identificador</h2><button onclick="openModal('modal-profile')" class="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1.5 rounded-xl">Cambiar</button></div>
-   <div class="bg-slate-50 p-3 rounded-xl flex justify-between text-xs"><strong id="settings-identity" class="text-indigo-700"></strong><span id="settings-device" class="font-mono text-slate-400"></span></div>
-  </div>
+
   <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl space-y-2">
-   <h2 class="h2">Enlace de invitación</h2>
-   <p class="text-xs text-indigo-800">Incluye el token en el fragmento (#) del enlace, que no se envía a ningún servidor. Usa un token <strong>fine-grained</strong> limitado a este único repositorio con permiso Contents: Read and write. Si ya compartiste un enlace con tu token anterior, revócalo en GitHub y crea uno nuevo.</p>
-   <button onclick="copyMagicLink()" class="btn">Copiar enlace</button>
+   <h2 class="h2 text-indigo-900">Enlace de invitación</h2>
+   <p class="text-xs text-indigo-800">Genera el enlace para compartir con otros vecinos de confianza.</p>
+   <button onclick="copyMagicLink()" class="btn">Copiar enlace de acceso</button>
   </div>
+
   <div class="card space-y-3">
    <h2 class="h2">Conexión GitHub</h2>
    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
     <div><label class="lbl">Usuario</label><input id="gh-owner" class="inp" /></div>
     <div><label class="lbl">Repositorio</label><input id="gh-repo" class="inp" /></div>
-    <div><label class="lbl">Token</label><input id="gh-token" type="password" autocomplete="off" class="inp font-mono" /></div>
+    <div><label class="lbl">Token (Personal Access)</label><input id="gh-token" type="password" autocomplete="off" class="inp font-mono" /></div>
    </div>
-   <button onclick="saveGh()" class="btn">Guardar y sincronizar</button>
-  </div>
-  <div class="card space-y-3">
-   <h2 class="h2">Datos del edificio</h2>
-   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    <div><label class="lbl">Nombre</label><input id="set-name" class="inp" maxlength="80" /></div>
-    <div><label class="lbl">Cuota ordinaria ($)</label><input id="set-fee" type="number" min="0" class="inp" /></div>
-   </div>
-   <button onclick="saveBuilding()" class="btn">Actualizar datos</button>
-  </div>
-  <div class="card space-y-3">
-   <div class="flex justify-between items-center"><h2 class="h2">Departamentos</h2><button onclick="openModal('modal-dept')" class="btn !bg-slate-900">Agregar</button></div>
-   <div id="departments" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+   <button onclick="saveGh()" class="btn">Guardar credenciales y sincronizar</button>
   </div>
  </section>
 </main>
 
-<nav id="nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 py-1.5 shadow-lg"></nav>
+<!-- Barra Inferior de Navegación Móvil -->
+<nav id="nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 py-2 px-1 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]"></nav>
 
+<!-- Modal: Registro de Movimiento -->
 <div id="modal-transaction" class="modal hidden">
  <div class="box !max-w-md">
-  <div class="flex justify-between items-center border-b border-slate-100 pb-3"><h3 class="font-bold text-lg" id="tx-title">Registrar pago de vecino</h3><button onclick="closeModal('modal-transaction')" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+  <div class="flex justify-between items-center border-b border-slate-100 pb-3"><h3 class="font-bold text-lg" id="tx-title">Registrar pago</h3><button onclick="closeModal('modal-transaction')" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-5 h-5"></i></button></div>
   <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-   <button type="button" id="tab-income" onclick="setTxType('INCOME')" class="py-2 rounded-lg text-xs font-bold">Cooperación (+)</button>
-   <button type="button" id="tab-expense" onclick="setTxType('EXPENSE')" class="py-2 rounded-lg text-xs font-bold">Gasto (-)</button>
+   <button type="button" id="tab-income" onclick="setTxType('INCOME')" class="py-2 rounded-lg text-xs font-bold transition">Cooperación (+)</button>
+   <button type="button" id="tab-expense" onclick="setTxType('EXPENSE')" class="py-2 rounded-lg text-xs font-bold transition">Gasto (-)</button>
   </div>
   <form onsubmit="submitTx(event)" class="space-y-3">
    <input type="hidden" id="tx-type" value="INCOME" />
    <div id="block-income" class="space-y-3">
-    <div><label class="lbl">Departamento</label><select id="tx-dept" onchange="fillResident()" class="inp"></select></div>
+    <div>
+     <div class="flex justify-between items-center mb-1">
+      <label class="lbl !mb-0">Departamento</label>
+      <button type="button" onclick="openModal('modal-dept')" class="text-[11px] text-indigo-600 font-bold hover:underline">+ Nuevo Depto</button>
+     </div>
+     <select id="tx-dept" onchange="fillResident()" class="inp"></select>
+    </div>
     <div><label class="lbl">Residente</label><input id="tx-resident" class="inp" maxlength="80" /></div>
    </div>
    <div id="block-expense" class="space-y-3 hidden">
     <div><label class="lbl">Categoría</label><select id="tx-category" onchange="fillProviderOptions()" class="inp"></select></div>
-    <div><label class="lbl">Proveedor</label><select id="tx-provider-select" onchange="$('tx-provider').value=this.value" class="inp mb-1.5"></select><input id="tx-provider" class="inp" maxlength="80" placeholder="O escribe el nombre" /></div>
+    <div><label class="lbl">Proveedor</label><select id="tx-provider-select" onchange="$('tx-provider').value=this.value" class="inp mb-1.5"></select><input id="tx-provider" class="inp" maxlength="80" placeholder="O escribe el nombre del proveedor" /></div>
    </div>
    <div class="grid grid-cols-2 gap-3">
     <div><label class="lbl">Importe ($ MXN)</label><input id="tx-amount" type="number" step="0.5" min="0.5" class="inp font-bold" required /></div>
     <div><label class="lbl">Fecha</label><input id="tx-date" type="date" class="inp" required /></div>
    </div>
-   <div><label class="lbl">Detalle</label><input id="tx-notes" class="inp" maxlength="120" placeholder="Ej. Pipa de 10,000L cisterna norte" /></div>
+   <div><label class="lbl">Detalle / Concepto</label><input id="tx-notes" class="inp" maxlength="120" placeholder="Ej. Pipa de agua 10,000L cisterna norte" /></div>
    <button type="submit" class="btn w-full !py-3 !text-sm">Guardar movimiento</button>
   </form>
  </div>
 </div>
 
+<!-- Modal: Registro de Rol (Pipa / Poda) -->
+<div id="modal-turn" class="modal hidden">
+ <div class="box">
+  <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+   <h3 class="font-bold text-base" id="turn-modal-title">Registrar Solicitud</h3>
+   <button onclick="closeModal('modal-turn')" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+  </div>
+  <p class="text-xs text-slate-500">Anota quién solicitó el servicio para mantener el rol ordenado.</p>
+  <form onsubmit="submitTurn(event)" class="space-y-3">
+   <input type="hidden" id="turn-service-type" value="Agua" />
+   <div>
+    <label class="lbl">Departamento que solicitó</label>
+    <select id="turn-dept" onchange="fillTurnResident()" class="inp" required></select>
+   </div>
+   <div><label class="lbl">Nombre del Solicitante</label><input id="turn-resident" class="inp" maxlength="80" required /></div>
+   <div><label class="lbl">Fecha del pedido</label><input id="turn-date" type="date" class="inp" required /></div>
+   <div><label class="lbl">Proveedor elegido</label><select id="turn-provider" class="inp"></select></div>
+   <div><label class="lbl">Comentarios</label><input id="turn-notes" class="inp" maxlength="120" placeholder="Ej. Se llenó cisterna chica; costo $850" /></div>
+   <button type="submit" class="btn w-full !py-2.5">Guardar en el Rol</button>
+  </form>
+ </div>
+</div>
+
+<!-- Modal: Emisión de Aviso con Vigencia -->
+<div id="modal-notice" class="modal hidden">
+ <div class="box">
+  <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+   <h3 class="font-bold text-base">Publicar aviso del edificio</h3>
+   <button onclick="closeModal('modal-notice')" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+  </div>
+  <form onsubmit="submitNotice(event)" class="space-y-3">
+   <div><label class="lbl">Mensaje para los vecinos</label><textarea id="notice-text" class="inp h-24" maxlength="250" placeholder="Ej. Se suspenderá el suministro de agua mañana por limpieza de cisterna." required></textarea></div>
+   <div>
+    <label class="lbl">Vigencia del aviso</label>
+    <select id="notice-duration" class="inp">
+     <option value="1">1 día</option>
+     <option value="3" selected>3 días</option>
+     <option value="7">1 semana</option>
+     <option value="15">15 días</option>
+     <option value="30">1 mes</option>
+    </select>
+   </div>
+   <button type="submit" class="btn w-full">Publicar aviso</button>
+  </form>
+ </div>
+</div>
+
+<!-- Modal: Mi Perfil -->
 <div id="modal-profile" class="modal hidden">
  <div class="box">
   <h3 class="font-bold text-lg text-center" id="profile-title">Identifica tu dispositivo</h3>
-  <p class="text-xs text-slate-500 text-center">Para que tus vecinos sepan quién registra los movimientos.</p>
+  <p class="text-xs text-slate-500 text-center">Para saber quién realiza solicitudes o pagos.</p>
   <form onsubmit="submitProfile(event)" class="space-y-3">
    <div><label class="lbl">Tu departamento</label><select id="prof-dept" onchange="fillProfileName()" class="inp"></select></div>
    <div><label class="lbl">Tu nombre completo</label><input id="prof-name" class="inp" maxlength="80" required /></div>
@@ -226,46 +373,54 @@
  </div>
 </div>
 
+<!-- Modal: Añadir Proveedor -->
 <div id="modal-provider" class="modal hidden">
  <div class="box">
   <div class="flex justify-between items-center border-b border-slate-100 pb-2"><h3 class="font-bold">Agregar proveedor</h3><button onclick="closeModal('modal-provider')" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div>
   <form id="form-provider" onsubmit="submitProvider(event)" class="space-y-3">
    <div><label class="lbl">Tipo de servicio</label><select id="prov-category" class="inp"></select></div>
-   <div><label class="lbl">Nombre</label><input id="prov-name" class="inp" maxlength="80" required /></div>
-   <div><label class="lbl">Teléfono</label><input id="prov-phone" type="tel" class="inp" maxlength="20" required /></div>
-   <div><label class="lbl">Notas / tarifa</label><input id="prov-notes" class="inp" maxlength="120" /></div>
+   <div><label class="lbl">Nombre del proveedor / negocio</label><input id="prov-name" class="inp" maxlength="80" required /></div>
+   <div><label class="lbl">Teléfono / WhatsApp (10 dígitos)</label><input id="prov-phone" type="tel" class="inp" maxlength="20" placeholder="Ej. 9381234567" required /></div>
+   <div><label class="lbl">Notas / tarifa estimada</label><input id="prov-notes" class="inp" maxlength="120" placeholder="Ej. Pipa $850, responde rápido" /></div>
    <button type="submit" class="btn w-full">Guardar proveedor</button>
   </form>
  </div>
 </div>
 
+<!-- Modal: Añadir Departamento -->
 <div id="modal-dept" class="modal hidden">
  <div class="box">
   <div class="flex justify-between items-center border-b border-slate-100 pb-2"><h3 class="font-bold">Agregar departamento</h3><button onclick="closeModal('modal-dept')" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div>
   <form id="form-dept" onsubmit="submitDept(event)" class="space-y-3">
-   <div><label class="lbl">Identificador</label><input id="dept-id" class="inp" maxlength="40" placeholder="Depto 101" required /></div>
-   <div><label class="lbl">Residente</label><input id="dept-owner" class="inp" maxlength="80" required /></div>
-   <div><label class="lbl">Teléfono (opcional)</label><input id="dept-phone" type="tel" class="inp" maxlength="20" /></div>
-   <button type="submit" class="btn w-full">Guardar departamento</button>
+   <div><label class="lbl">Identificador</label><input id="dept-id" class="inp" maxlength="40" placeholder="Ej. Depto 301 / Casa 5" required /></div>
+   <div><label class="lbl">Nombre del vecino o residente</label><input id="dept-owner" class="inp" maxlength="80" placeholder="Ej. Juan Pérez" required /></div>
+   <div><label class="lbl">Teléfono (opcional)</label><input id="dept-phone" type="tel" class="inp" maxlength="20" placeholder="Ej. 9380000000" /></div>
+   <button type="submit" class="btn w-full">Registrar departamento</button>
   </form>
  </div>
 </div>
 
 <script>
 "use strict";
-/* ---------- Utilidades y seguridad ---------- */
+/* ---------- Utilidades ---------- */
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const S = v => String(v ?? "").slice(0, 300);
 const money = n => "$" + (Number(n) || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 });
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 const digits = s => String(s || "").replace(/\D/g, "");
+const waLink = (phone, msg) => {
+  const d = digits(phone);
+  if (!d) return "#";
+  const num = d.length === 10 ? "52" + d : d;
+  return `https://wa.me/${num}?text=${encodeURIComponent(msg || "Hola, le escribo respecto al servicio del edificio.")}`;
+};
 const jload = (k, f) => { try { return JSON.parse(localStorage.getItem(k)) || f; } catch { return f; } };
 const b64e = s => { let x = ""; new TextEncoder().encode(s).forEach(c => x += String.fromCharCode(c)); return btoa(x); };
 const b64d = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), c => c.charCodeAt(0)));
 const icons = () => window.lucide && lucide.createIcons();
 
-/* Reconstruye los datos con tipos estrictos: lo que llegue de GitHub nunca se usa "tal cual" */
+/* Normalización de datos */
 function normalize(d) {
   d = d && typeof d === "object" ? d : {};
   const A = x => Array.isArray(x) ? x : [];
@@ -273,9 +428,25 @@ function normalize(d) {
   return {
     buildingName: S(d.buildingName) || "Mi Edificio",
     defaultFee: Number(d.defaultFee) || 0,
-    urgentNotice: n && n.text ? { id: S(n.id), text: S(n.text), author: S(n.author), date: S(n.date) } : null,
+    urgentNotice: n && n.text ? { 
+      id: S(n.id), 
+      text: S(n.text), 
+      author: S(n.author), 
+      date: S(n.date),
+      expiresAt: Number(n.expiresAt) || (Date.now() + 3*86400000)
+    } : null,
     providers: A(d.providers).map(p => ({ id: S(p.id), name: S(p.name), category: S(p.category), phone: S(p.phone), notes: S(p.notes) })),
     departments: A(d.departments).map(x => ({ id: S(x.id), owner: S(x.owner), phone: S(x.phone) })),
+    serviceTurns: A(d.serviceTurns).map(t => ({
+      id: S(t.id),
+      serviceType: S(t.serviceType) || "Agua",
+      department: S(t.department),
+      resident: S(t.resident),
+      date: S(t.date),
+      provider: S(t.provider),
+      notes: S(t.notes),
+      timestamp: Number(t.timestamp) || 0
+    })),
     transactions: A(d.transactions).map(t => ({
       id: S(t.id), type: t.type === "EXPENSE" ? "EXPENSE" : "INCOME", amount: Number(t.amount) || 0, date: S(t.date), notes: S(t.notes),
       createdBy: S(t.createdBy) || "(Registro inicial / Admin)", deviceId: S(t.deviceId) || "LEGACY",
@@ -285,20 +456,22 @@ function normalize(d) {
   };
 }
 
-/* ---------- Estado ---------- */
+/* ---------- Estado Base ---------- */
 const CATS = [["Agua", "Agua / Pipas"], ["Poda y Jardinería", "Poda y Jardinería"], ["Mantenimiento General", "Mantenimiento y Fontanería"], ["Luz Áreas Comunes", "Luz CFE"], ["Limpieza", "Limpieza"], ["Otros", "Otros"]];
 const DEFAULT_DATA = {
   buildingName: "Privada Las Palmas", defaultFee: 500, urgentNotice: null,
   providers: [
     { id: "prov-1", name: "Pipas San Jerónimo (Don Mario)", category: "Agua", phone: "9381234567", notes: "Pipa de 10,000L ($850 MXN)" },
-    { id: "prov-2", name: "Jardinería y Poda El Roble", category: "Poda y Jardinería", phone: "9387654321", notes: "Poda integral y retiro de ramas ($600 MXN)" }
+    { id: "prov-2", name: "Jardinería y Poda El Roble", category: "Poda y Jardinería", phone: "9387654321", notes: "Poda y limpieza ($600 MXN)" }
   ],
   departments: [
     { id: "Depto 101", owner: "Carlos Ramírez", phone: "" }, { id: "Depto 102", owner: "Beatriz López", phone: "" },
     { id: "Depto 201", owner: "Mariana Sánchez", phone: "" }, { id: "Depto 202", owner: "Jorge González", phone: "" }
   ],
+  serviceTurns: [],
   transactions: [], activities: []
 };
+
 let appData = normalize(jload("vecinos_app_data", DEFAULT_DATA));
 let gh = jload("vecinos_gh_config", { owner: "", repo: "", token: "" });
 let profile = jload("vecinos_user_profile", { name: "", department: "" });
@@ -306,7 +479,15 @@ let lastSeen = parseInt(localStorage.getItem("vecinos_last_seen") || "0");
 let myDeviceId = localStorage.getItem("vecinos_device_id");
 if (!myDeviceId) { myDeviceId = "DEV-" + Math.random().toString(36).slice(2, 6).toUpperCase(); localStorage.setItem("vecinos_device_id", myDeviceId); }
 let fileSha = null, chart = null, busy = false, pending = [];
-const VIEWS = { dashboard: ["Inicio", "layout-dashboard"], transactions: ["Movimientos", "receipt"], activities: ["Bitácora", "shield-check"], providers: ["Servicios", "contact"], settings: ["Ajustes", "settings"] };
+
+const VIEWS = { 
+  dashboard: ["Inicio", "layout-dashboard"],
+  turns: ["Rol Pipas", "rotate-cw"],
+  transactions: ["Cuentas", "receipt"], 
+  providers: ["Servicios", "contact"], 
+  activities: ["Bitácora", "shield-check"],
+  settings: ["Ajustes", "settings"] 
+};
 
 const author = () => profile.name && profile.department ? `${profile.name} (${profile.department})` : profile.name ? `${profile.name} [${myDeviceId}]` : `Dispositivo ${myDeviceId}`;
 const persist = () => localStorage.setItem("vecinos_app_data", JSON.stringify(appData));
@@ -319,7 +500,7 @@ function mkAct(type, text) {
 }
 const pushAct = (d, a) => { d.activities.unshift(a); d.activities = d.activities.slice(0, 50); };
 
-/* ---------- Sincronización con GitHub (con manejo de conflictos) ---------- */
+/* ---------- Sincronización GitHub ---------- */
 function setSync(text, cls) { $("sync-text").textContent = text; $("sync-dot").className = "w-2 h-2 rounded-full " + cls; }
 
 async function pull() {
@@ -348,8 +529,6 @@ async function put(msg) {
   return res.status === 409 || res.status === 422 ? "conflict" : "err";
 }
 
-/* Cada cambio es una función que se aplica sobre los datos más recientes. Si hay conflicto,
-   se vuelve a descargar y se reaplica: nadie pierde sus registros. */
 async function commit(mutator, msg) {
   pending.push({ mutator, msg });
   mutator(appData); persist(); updateUI();
@@ -358,7 +537,7 @@ async function commit(mutator, msg) {
 
 async function flush() {
   if (busy) return;
-  if (!canWrite()) { setSync("Guardado local", "bg-amber-400"); return; }
+  if (!canWrite()) { setSync("Modo Local", "bg-amber-400"); return; }
   busy = true; setSync("Guardando...", "bg-amber-400");
   try {
     let ok = false;
@@ -370,28 +549,28 @@ async function flush() {
       pending.forEach(p => p.mutator(appData));
     }
     persist(); updateUI();
-    setSync(ok || !pending.length ? "GitHub guardado" : "Error en GitHub", ok || !pending.length ? "bg-emerald-400" : "bg-rose-500");
-  } catch (e) { console.error(e); setSync("Error de red", "bg-rose-500"); }
+    setSync(ok || !pending.length ? "En la nube" : "Error en GitHub", ok || !pending.length ? "bg-emerald-400" : "bg-rose-500");
+  } catch (e) { console.error(e); setSync("Sin red", "bg-rose-500"); }
   busy = false;
 }
 
 async function sync() {
-  if (!gh.owner || !gh.repo) { $("setup-banner").classList.remove("hidden"); setSync("Sin conectar", "bg-slate-400"); updateUI(); return; }
+  if (!gh.owner || !gh.repo) { $("setup-banner").classList.remove("hidden"); setSync("Sin conexión", "bg-slate-400"); updateUI(); return; }
   $("setup-banner").classList.add("hidden");
   if (busy) return;
   busy = true; setSync("Sincronizando...", "bg-amber-400");
   try {
     const r = await pull();
-    if (r === "ok") { pending.forEach(p => p.mutator(appData)); persist(); setSync("GitHub sincronizado", "bg-emerald-400"); }
-    else if (r === "none" && gh.token) { pending.push({ mutator: d => pushAct(d, mkAct("SYSTEM", "Inicialización de base de datos")), msg: "Inicializar data.json" }); pending[0].mutator(appData); }
+    if (r === "ok") { pending.forEach(p => p.mutator(appData)); persist(); setSync("Actualizado", "bg-emerald-400"); }
+    else if (r === "none" && gh.token) { pending.push({ mutator: d => pushAct(d, mkAct("SYSTEM", "Inicialización del sistema")), msg: "Inicializar base de datos" }); pending[0].mutator(appData); }
     else setSync("Error al sincronizar", "bg-rose-500");
-  } catch (e) { console.error(e); setSync("Modo local (sin red)", "bg-slate-400"); }
+  } catch (e) { console.error(e); setSync("Modo local", "bg-slate-400"); }
   busy = false;
   if (pending.length && canWrite()) await flush();
   updateUI();
 }
 
-/* ---------- Enlace de invitación (token en el fragmento #, no en la query) ---------- */
+/* ---------- Enlaces e Invitaciones ---------- */
 function readInviteLink() {
   const p = new URLSearchParams(location.hash.slice(1) + "&" + location.search.slice(1));
   const owner = p.get("owner"), repo = p.get("repo"), token = p.get("token");
@@ -403,83 +582,129 @@ function readInviteLink() {
 }
 
 function copyMagicLink() {
-  if (!gh.token || !gh.owner || !gh.repo) { alert("Primero guarda tu conexión en Ajustes."); navTo("settings"); return; }
-  if (!confirm("Este enlace da acceso de escritura al repositorio a quien lo reciba. Úsalo solo con un token fine-grained limitado a este repo y compártelo solo con vecinos de confianza. ¿Continuar?")) return;
+  if (!gh.token || !gh.owner || !gh.repo) { alert("Primero configura y guarda el repositorio en Ajustes."); navTo("settings"); return; }
   const url = `${location.origin}${location.pathname}#owner=${encodeURIComponent(gh.owner)}&repo=${encodeURIComponent(gh.repo)}&token=${encodeURIComponent(gh.token)}`;
-  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => alert("Enlace copiado."));
-  else prompt("Copia este enlace:", url);
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => alert("Enlace de invitación copiado al portapapeles."));
+  else prompt("Copia este enlace de acceso:", url);
 }
 
 function saveGh() {
   const owner = $("gh-owner").value.trim(), repo = $("gh-repo").value.trim(), token = $("gh-token").value.trim();
-  if (!/^[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(repo)) { alert("Usuario o repositorio no válidos."); return; }
+  if (!owner || !repo) { alert("Ingresa un usuario y repositorio válidos."); return; }
   gh = { owner, repo, token };
   localStorage.setItem("vecinos_gh_config", JSON.stringify(gh));
   sync();
+  alert("Credenciales guardadas.");
 }
 
-/* ---------- Notificaciones ---------- */
+/* ---------- Notificaciones y Avisos ---------- */
 function notifSupport() {
   const ok = "Notification" in window, p = ok ? Notification.permission : "";
-  const label = !ok ? "No soportado" : p === "granted" ? "Activas en este equipo" : p === "denied" ? "Bloqueadas en el navegador" : "Sin activar";
+  const label = !ok ? "No soportado" : p === "granted" ? "Activas" : p === "denied" ? "Bloqueadas" : "Desactivadas";
   $("notif-status").textContent = label; $("settings-notif").textContent = label;
   return ok && p === "granted";
 }
 async function askNotifPermission() {
-  if (!("Notification" in window)) return alert("Tu navegador no soporta notificaciones.");
+  if (!("Notification" in window)) return alert("Tu navegador no soporta alertas directas.");
   await Notification.requestPermission(); notifSupport();
 }
 function notify(title, body) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
-  try { new Notification(title, { body, vibrate: [150, 100] }); }
+  try { new Notification(title, { body }); }
   catch { navigator.serviceWorker?.ready.then(r => r.showNotification(title, { body })); }
 }
-function testNotif() { Notification.permission === "granted" ? notify("Prueba", "Las alertas funcionan en este dispositivo.") : askNotifPermission(); }
+function testNotif() { Notification.permission === "granted" ? notify("Prueba", "Notificaciones activas en el edificio.") : askNotifPermission(); }
 function notifyNew(inc) {
   const seen = new Set(appData.transactions.map(t => t.id));
   inc.transactions.filter(t => !seen.has(t.id) && t.deviceId !== myDeviceId).forEach(t =>
-    t.type === "EXPENSE" ? notify(`Pago de servicio: ${t.category}`, `${t.provider} por ${money(t.amount)}. Registrado por ${t.createdBy}`)
-                         : notify("Nueva cuota registrada", `${t.department} abonó ${money(t.amount)}.`));
+    t.type === "EXPENSE" ? notify(`Gasto: ${t.category}`, `${t.provider} por ${money(t.amount)}.`)
+                         : notify("Nueva cuota pagada", `${t.department} abonó ${money(t.amount)}.`));
   const n = inc.urgentNotice;
-  if (n && (!appData.urgentNotice || appData.urgentNotice.id !== n.id) && !n.author.includes(myDeviceId)) notify("Aviso del edificio", n.text);
+  if (n && (!appData.urgentNotice || appData.urgentNotice.id !== n.id) && !n.author.includes(myDeviceId)) {
+    if (!n.expiresAt || n.expiresAt > Date.now()) notify("Aviso de Edificio", n.text);
+  }
 }
 function togglePanel() { const p = $("panel-notifications"); p.classList.toggle("hidden"); if (!p.classList.contains("hidden")) renderFeed(); }
 function markRead() { lastSeen = Date.now(); localStorage.setItem("vecinos_last_seen", String(lastSeen)); togglePanel(); updateUI(); }
 function renderFeed() {
-  const f = appData.activities.slice(0, 6);
-  $("panel-feed").innerHTML = f.length ? f.map(a => `<div class="p-2 bg-slate-50 rounded-xl border border-slate-100"><p class="font-medium text-slate-800 leading-tight">${esc(a.text)}</p><span class="text-[10px] text-slate-400">${esc(a.author)} • ${esc(a.time)}</span></div>`).join("") : `<p class="text-slate-400 italic">Sin actividades recientes.</p>`;
-}
-async function newNotice() {
-  const text = (prompt("Escribe el aviso para todos los vecinos:") || "").trim().slice(0, 200);
-  if (!text) return;
-  const notice = { id: "notice-" + Date.now(), text, author: S(author()), date: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) };
-  const act = mkAct("CONFIG", `Publicó aviso urgente: "${text}"`);
-  notify("Aviso del edificio", text);
-  await commit(d => { d.urgentNotice = notice; pushAct(d, act); }, "Publicar aviso");
+  const f = appData.activities.slice(0, 8);
+  $("panel-feed").innerHTML = f.length ? f.map(a => `<div class="p-2 bg-slate-50 rounded-xl border border-slate-100"><p class="font-medium text-slate-800 leading-tight">${esc(a.text)}</p><span class="text-[10px] text-slate-400">${esc(a.author)} • ${esc(a.time)}</span></div>`).join("") : `<p class="text-slate-400 italic text-center py-2">Sin actividad reciente.</p>`;
 }
 
-/* ---------- Navegación y modales ---------- */
+/* Gestión de Avisos con Caducidad */
+function checkNoticeExpiry() {
+  if (!appData.urgentNotice) return;
+  if (appData.urgentNotice.expiresAt && Date.now() > appData.urgentNotice.expiresAt) {
+    appData.urgentNotice = null;
+    persist();
+  }
+}
+async function submitNotice(e) {
+  e.preventDefault();
+  const text = $("notice-text").value.trim();
+  const days = parseInt($("notice-duration").value) || 3;
+  if (!text) return;
+  const expiresAt = Date.now() + (days * 24 * 60 * 60 * 1000);
+  const notice = {
+    id: "notice-" + Date.now(),
+    text,
+    author: S(author()),
+    date: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+    expiresAt
+  };
+  const act = mkAct("CONFIG", `Publicó aviso con vigencia de ${days} día(s): "${text}"`);
+  closeModal("modal-notice");
+  $("notice-text").value = "";
+  await commit(d => { d.urgentNotice = notice; pushAct(d, act); }, "Publicar aviso");
+}
+async function dismissUrgentNotice() {
+  if (!confirm("¿Deseas retirar este aviso para todos los vecinos?")) return;
+  const act = mkAct("CONFIG", "Retiró el aviso del edificio");
+  await commit(d => { d.urgentNotice = null; pushAct(d, act); }, "Retirar aviso");
+}
+
+/* ---------- Navegación ---------- */
 function navTo(v) {
   Object.keys(VIEWS).forEach(x => {
     $("view-" + x).classList.toggle("hidden", x !== v);
-    const b = $("nav-" + x); b.classList.toggle("text-indigo-600", x === v); b.classList.toggle("text-slate-400", x !== v);
+    const b = $("nav-" + x); 
+    if (b) {
+      b.classList.toggle("text-indigo-600", x === v); 
+      b.classList.toggle("text-slate-400", x !== v);
+    }
   });
-  ({ transactions: renderTx, activities: renderAct, providers: renderProv, settings: loadSettings }[v] || (() => {}))();
+  $("sub-header-bar").classList.toggle("hidden", v === "dashboard");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  ({ 
+    transactions: renderTx, 
+    activities: renderAct, 
+    providers: renderProv, 
+    turns: renderTurnsView,
+    settings: loadSettings 
+  }[v] || (() => {}))();
   icons();
 }
+
 function openModal(id, welcome) {
   $(id).classList.remove("hidden");
   if (id === "modal-transaction") {
     $("tx-date").value = today(); $("tx-amount").value = appData.defaultFee || "";
-    fillSelect("tx-dept", appData.departments.map(d => [d.id, `${d.id} - ${d.owner}`])); fillResident(); setTxType($("tx-type").value); fillProviderOptions();
+    fillSelect("tx-dept", appData.departments.map(d => [d.id, `${d.id} - ${d.owner}`])); 
+    fillResident(); 
+    setTxType($("tx-type").value); 
+    fillProviderOptions();
   } else if (id === "modal-profile") {
-    fillSelect("prof-dept", [["", "-- Selecciona tu depto --"], ...appData.departments.map(d => [d.id, `${d.id} (${d.owner})`])], profile.department);
+    fillSelect("prof-dept", [["", "-- Selecciona tu departamento --"], ...appData.departments.map(d => [d.id, `${d.id} (${d.owner})`])], profile.department);
     $("prof-name").value = profile.name || "";
     $("profile-title").textContent = welcome ? "¡Bienvenido al edificio!" : "Identifica tu dispositivo";
-  } else if (id === "modal-provider") fillSelect("prov-category", CATS.slice(0, 3).concat([["Electricista", "Electricista / CFE"], ["Otros", "Otro servicio"]]));
+  } else if (id === "modal-provider") {
+    fillSelect("prov-category", CATS);
+  }
   icons();
 }
 const closeModal = id => $(id).classList.add("hidden");
+
 function fillSelect(id, opts, sel) {
   const s = $(id); s.textContent = "";
   opts.forEach(([v, t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; if (v === sel) o.selected = true; s.appendChild(o); });
@@ -493,14 +718,14 @@ function setTxType(t) {
   $("tab-expense").className = "py-2 rounded-lg text-xs font-bold " + (!inc ? "bg-white shadow text-rose-600" : "text-slate-500");
   $("block-income").classList.toggle("hidden", !inc); $("block-expense").classList.toggle("hidden", inc);
   $("tx-resident").required = inc;
-  $("tx-title").textContent = inc ? "Registrar pago de vecino" : "Registrar gasto de servicio";
+  $("tx-title").textContent = inc ? "Registrar pago de cuota" : "Registrar gasto del edificio";
 }
 function fillResident() { const d = appData.departments.find(x => x.id === $("tx-dept").value); if (d) $("tx-resident").value = d.owner; }
 function fillProviderOptions() {
   if (!$("tx-category").options.length) fillSelect("tx-category", CATS);
   const c = $("tx-category").value;
   const f = appData.providers.filter(p => p.category === c || c === "Otros");
-  fillSelect("tx-provider-select", [["", "-- Contactos guardados --"], ...(f.length ? f : appData.providers).map(p => [p.name, `${p.name} (${p.phone})`])]);
+  fillSelect("tx-provider-select", [["", "-- Proveedores registrados --"], ...(f.length ? f : appData.providers).map(p => [p.name, `${p.name} (${p.phone})`])]);
 }
 async function submitTx(e) {
   e.preventDefault();
@@ -520,21 +745,21 @@ async function submitTx(e) {
 }
 async function delTx(id) {
   const t = appData.transactions.find(x => x.id === id);
-  if (!t || !confirm("¿Eliminar este registro?")) return;
-  const act = mkAct("SYSTEM", `Eliminó el registro de ${money(t.amount)} (${t.type === "INCOME" ? t.department : t.category})`);
+  if (!t || !confirm("¿Eliminar este registro financiero?")) return;
+  const act = mkAct("SYSTEM", `Eliminó el movimiento de ${money(t.amount)} (${t.type === "INCOME" ? t.department : t.category})`);
   await commit(d => { d.transactions = d.transactions.filter(x => x.id !== id); pushAct(d, act); }, "Eliminar transacción");
   renderTx();
 }
 function txRow(t) {
   const inc = t.type === "INCOME";
-  return `<div class="p-3.5 flex items-center justify-between">
+  return `<div class="p-3.5 flex items-center justify-between gap-2">
    <div class="flex items-center gap-3 min-w-0">
-    <div class="p-2 rounded-xl ${inc ? "bg-indigo-50 text-indigo-600" : "bg-rose-50 text-rose-600"}"><i data-lucide="${inc ? "arrow-down-left" : "arrow-up-right"}" class="w-4 h-4"></i></div>
-    <div class="min-w-0"><div class="font-bold text-xs">${esc(inc ? t.department + " • " + t.resident : t.category)}</div>
-     <div class="text-[11px] text-slate-400 flex flex-wrap gap-x-1.5"><span>${esc(t.date)}</span><span>•</span><span>${esc(t.notes || (inc ? "Cuota" : t.provider))}</span><span>•</span><span class="text-indigo-600 font-medium">Por: ${esc(t.createdBy)}</span></div></div>
+    <div class="p-2 rounded-xl ${inc ? "bg-indigo-50 text-indigo-600" : "bg-rose-50 text-rose-600"} shrink-0"><i data-lucide="${inc ? "arrow-down-left" : "arrow-up-right"}" class="w-4 h-4"></i></div>
+    <div class="min-w-0"><div class="font-bold text-xs truncate">${esc(inc ? t.department + " • " + t.resident : t.category)}</div>
+     <div class="text-[11px] text-slate-400 flex flex-wrap gap-x-1.5 leading-tight"><span>${esc(t.date)}</span><span>•</span><span>${esc(t.notes || (inc ? "Cuota" : t.provider))}</span><span>•</span><span class="text-indigo-600 font-medium">Por: ${esc(t.createdBy)}</span></div></div>
    </div>
    <div class="text-right flex-shrink-0"><div class="font-bold text-xs ${inc ? "text-indigo-600" : "text-rose-600"}">${inc ? "+" : "-"}${money(t.amount)}</div>
-    <button data-a="delTx" data-v="${esc(t.id)}" class="text-[10px] text-slate-400 hover:text-rose-500">Eliminar</button></div>
+    <button data-a="delTx" data-v="${esc(t.id)}" class="text-[10px] text-slate-400 hover:text-rose-500 font-medium">Eliminar</button></div>
   </div>`;
 }
 function renderTx() {
@@ -542,82 +767,195 @@ function renderTx() {
   if (!fc.options.length) fillSelect("filter-category", [["ALL", "Todas las categorías"], ...CATS]);
   const ty = $("filter-type").value, ca = fc.value;
   const list = appData.transactions.filter(t => (ty === "ALL" || t.type === ty) && (ca === "ALL" || t.category === ca));
-  $("all-tx").innerHTML = list.length ? list.map(txRow).join("") : `<div class="p-8 text-center text-xs text-slate-400">No se encontraron movimientos.</div>`;
+  $("all-tx").innerHTML = list.length ? list.map(txRow).join("") : `<div class="p-8 text-center text-xs text-slate-400">No hay movimientos con esos filtros.</div>`;
   icons();
 }
 
-/* ---------- Proveedores ---------- */
+/* ---------- Sistema de Rol (Pipas y Podas) ---------- */
+function openTurnModal(type) {
+  $("turn-service-type").value = type;
+  $("turn-modal-title").textContent = type === "Agua" ? "Solicitud de Pipa de Agua" : "Solicitud de Poda y Limpieza";
+  fillSelect("turn-dept", appData.departments.map(d => [d.id, `${d.id} - ${d.owner}`]), profile.department || "");
+  fillTurnResident();
+  $("turn-date").value = today();
+  
+  const provs = appData.providers.filter(p => type === "Agua" ? p.category === "Agua" : p.category.includes("Poda"));
+  fillSelect("turn-provider", (provs.length ? provs : appData.providers).map(p => [p.name, `${p.name} (${p.phone})`]));
+  $("turn-notes").value = "";
+  openModal("modal-turn");
+}
+function fillTurnResident() {
+  const d = appData.departments.find(x => x.id === $("turn-dept").value);
+  if (d) $("turn-resident").value = d.owner;
+}
+async function submitTurn(e) {
+  e.preventDefault();
+  const serviceType = $("turn-service-type").value;
+  const turn = {
+    id: "turn-" + Date.now(),
+    serviceType,
+    department: S($("turn-dept").value),
+    resident: S($("turn-resident").value),
+    date: S($("turn-date").value),
+    provider: S($("turn-provider").value),
+    notes: S($("turn-notes").value),
+    timestamp: Date.now()
+  };
+  const act = mkAct("SYSTEM", `Turno de ${serviceType}: Solicitado por ${turn.department} (${turn.resident})`);
+  closeModal("modal-turn");
+  await commit(d => {
+    if (!Array.isArray(d.serviceTurns)) d.serviceTurns = [];
+    d.serviceTurns.unshift(turn);
+    pushAct(d, act);
+  }, `Solicitud de ${serviceType} registrada`);
+  renderTurnsView();
+}
+function renderTurnsView() {
+  const list = appData.serviceTurns || [];
+  $("turns-list").innerHTML = list.length ? list.map(t => {
+    const isWater = t.serviceType === "Agua";
+    return `<div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
+      <div class="flex items-start gap-3 min-w-0">
+        <div class="p-2.5 rounded-xl ${isWater ? "bg-sky-100 text-sky-700" : "bg-emerald-100 text-emerald-700"} shrink-0">
+          <i data-lucide="${isWater ? "droplet" : "scissors"}" class="w-5 h-5"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-xs ${isWater ? "text-sky-800" : "text-emerald-800"}">${esc(t.serviceType)}</span>
+            <span class="text-[10px] text-slate-400 font-mono">${esc(t.date)}</span>
+          </div>
+          <p class="text-xs text-slate-700 font-medium">Solicitó: <strong>${esc(t.department)}</strong> (${esc(t.resident)})</p>
+          <p class="text-[11px] text-slate-500 truncate">${esc(t.provider || "Proveedor particular")} ${t.notes ? "• " + esc(t.notes) : ""}</p>
+        </div>
+      </div>
+      <button onclick="delTurn('${esc(t.id)}')" class="text-slate-400 hover:text-rose-600 p-2 shrink-0" title="Eliminar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+    </div>`;
+  }).join("") : `<div class="p-8 text-center text-xs text-slate-400">No hay registros de pipa o poda en el rol. Presiona un botón superior para agendar el primero.</div>`;
+  icons();
+}
+async function delTurn(id) {
+  if (!confirm("¿Eliminar este turno del historial?")) return;
+  await commit(d => {
+    d.serviceTurns = (d.serviceTurns || []).filter(x => x.id !== id);
+    pushAct(d, mkAct("SYSTEM", "Eliminó un turno del rol de servicios"));
+  }, "Eliminar turno de servicio");
+  renderTurnsView();
+}
+
+/* ---------- Proveedores y Servicios Rápidos (con WhatsApp) ---------- */
 function renderProv() {
   $("full-providers").innerHTML = appData.providers.map(p => `
-   <div class="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-3">
-    <div><div class="flex justify-between items-start mb-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(p.category)}</span>
-     <button data-a="delProv" data-v="${esc(p.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-     <h3 class="font-bold text-sm">${esc(p.name)}</h3><p class="text-xs text-slate-500">${esc(p.notes || "Sin observaciones")}</p></div>
-    <div class="pt-2 border-t border-slate-100 flex items-center justify-between"><span class="text-xs font-semibold text-slate-700">${esc(p.phone)}</span>
-     <a href="tel:${digits(p.phone)}" class="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold">Llamar</a></div>
+   <div class="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-2.5">
+    <div class="flex justify-between items-start">
+     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(p.category)}</span>
+     <button data-a="delProv" data-v="${esc(p.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+    </div>
+    <div>
+     <h3 class="font-bold text-sm text-slate-800">${esc(p.name)}</h3>
+     <p class="text-xs text-slate-500">${esc(p.notes || "Sin observaciones")}</p>
+    </div>
+    <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+     <span class="text-xs font-semibold text-slate-700 font-mono">${esc(p.phone)}</span>
+     <div class="flex items-center gap-1.5">
+      <a href="${waLink(p.phone, 'Hola, le contacto del edificio ' + appData.buildingName + ' para solicitar información del servicio.')}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1 transition">
+       <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> <span>WhatsApp</span>
+      </a>
+      <a href="tel:${digits(p.phone)}" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 transition">
+       <i data-lucide="phone" class="w-3.5 h-3.5"></i> <span>Llamar</span>
+      </a>
+     </div>
+    </div>
    </div>`).join("");
   icons();
 }
+
 function renderQuick() {
-  const feat = appData.providers.filter(p => p.category === "Agua" || p.category === "Poda y Jardinería");
+  const feat = appData.providers.filter(p => p.category === "Agua" || p.category.includes("Poda"));
   const list = (feat.length ? feat : appData.providers).slice(0, 4);
   $("quick-providers").innerHTML = list.length ? list.map(p => `
-   <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50">
-    <div class="truncate"><h4 class="text-xs font-bold truncate">${esc(p.name)}</h4><p class="text-[11px] text-slate-500 truncate">${esc(p.notes || p.phone)}</p></div>
-    <a href="tel:${digits(p.phone)}" class="p-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold ml-2">Llamar</a></div>`).join("")
-    : `<div class="text-xs text-slate-400 col-span-2">Sin proveedores. Agrega uno en el directorio.</div>`;
+   <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50 gap-2">
+    <div class="min-w-0">
+     <h4 class="text-xs font-bold truncate text-slate-800">${esc(p.name)}</h4>
+     <p class="text-[11px] text-slate-500 truncate">${esc(p.notes || p.phone)}</p>
+    </div>
+    <div class="flex items-center gap-1 shrink-0">
+     <a href="${waLink(p.phone, 'Hola, necesitamos servicio en el edificio ' + appData.buildingName)}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold flex items-center justify-center" title="WhatsApp">
+      <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+     </a>
+     <a href="tel:${digits(p.phone)}" class="p-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold flex items-center justify-center" title="Llamar">
+      <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+     </a>
+    </div>
+   </div>`).join("")
+    : `<div class="text-xs text-slate-400 col-span-2 py-2">Sin proveedores guardados. Agrega uno en el menú Servicios.</div>`;
 }
+
 async function submitProvider(e) {
   e.preventDefault();
   const p = { id: "prov-" + Date.now(), category: S($("prov-category").value), name: S($("prov-name").value.trim()), phone: S($("prov-phone").value.trim()), notes: S($("prov-notes").value.trim()) };
   if (!p.name || !digits(p.phone)) return;
-  const act = mkAct("CONFIG", `Agregó al directorio: ${p.name} (${p.category})`);
+  const act = mkAct("CONFIG", `Añadió proveedor: ${p.name} (${p.category})`);
   closeModal("modal-provider"); e.target.reset();
   await commit(d => { d.providers.push(p); pushAct(d, act); }, `Agregar proveedor ${p.name}`);
   renderProv();
 }
 async function delProv(id) {
   const p = appData.providers.find(x => x.id === id);
-  if (!p || !confirm("¿Eliminar este proveedor?")) return;
-  const act = mkAct("CONFIG", `Eliminó del directorio: ${p.name}`);
+  if (!p || !confirm("¿Eliminar este proveedor de la agenda?")) return;
+  const act = mkAct("CONFIG", `Eliminó proveedor: ${p.name}`);
   await commit(d => { d.providers = d.providers.filter(x => x.id !== id); pushAct(d, act); }, `Eliminar proveedor ${p.name}`);
   renderProv();
 }
 
-/* ---------- Ajustes y departamentos ---------- */
+/* ---------- Ajustes y Gestión de Departamentos ---------- */
 function loadSettings() {
-  $("gh-owner").value = gh.owner || ""; $("gh-repo").value = gh.repo || ""; $("gh-token").value = gh.token || "";
+  $("gh-owner").value = gh.owner || ""; $("gh-repo").value = gh.repo \vert{}\vert{} ""; $("gh-token").value = gh.token || "";
   $("set-name").value = appData.buildingName; $("set-fee").value = appData.defaultFee;
   $("departments").innerHTML = appData.departments.map(d => `
-   <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
-    <div><span class="font-bold text-sm">${esc(d.id)}</span><p class="text-xs text-slate-500">${esc(d.owner)}${d.phone ? " • " + esc(d.phone) : ""}</p></div>
-    <button data-a="delDept" data-v="${esc(d.id)}" class="text-slate-400 hover:text-rose-600 p-1.5"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join("");
+   <div class="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl gap-2">
+    <div class="min-w-0 truncate">
+     <span class="font-bold text-xs sm:text-sm text-slate-800">${esc(d.id)}</span>
+     <p class="text-xs text-slate-500 truncate">${esc(d.owner)}${d.phone ? " • " + esc(d.phone) : ""}</p>
+    </div>
+    <div class="flex items-center gap-1 shrink-0">
+     ${d.phone ? `<a href="${waLink(d.phone)}" target="_blank" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><i data-lucide="message-circle" class="w-4 h-4"></i></a>` : ""}
+     <button data-a="delDept" data-v="${esc(d.id)}" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+    </div>
+   </div>`).join("");
   updateProfileUI(); notifSupport(); icons();
 }
+
 async function saveBuilding() {
   const name = S($("set-name").value.trim()), fee = Math.max(0, parseFloat($("set-fee").value) || 0);
   if (!name) return;
-  const act = mkAct("CONFIG", `Actualizó datos a "${name}" (Cuota: ${money(fee)})`);
+  const act = mkAct("CONFIG", `Actualizó edificio: "${name}" (Cuota: ${money(fee)})`);
   await commit(d => { d.buildingName = name; d.defaultFee = fee; pushAct(d, act); }, "Actualizar datos del edificio");
-  alert("Datos actualizados.");
+  alert("Datos guardados.");
 }
+
 async function submitDept(e) {
   e.preventDefault();
   const dp = { id: S($("dept-id").value.trim()), owner: S($("dept-owner").value.trim()), phone: S($("dept-phone").value.trim()) };
   if (!dp.id || !dp.owner) return;
-  const act = mkAct("CONFIG", `Dio de alta el departamento ${dp.id} (${dp.owner})`);
+  const act = mkAct("CONFIG", `Alta de departamento: ${dp.id} (${dp.owner})`);
   closeModal("modal-dept"); e.target.reset();
-  await commit(d => { if (!d.departments.some(x => x.id === dp.id)) d.departments.push(dp); pushAct(d, act); }, `Agregar departamento ${dp.id}`);
+  await commit(d => { 
+    if (!d.departments.some(x => x.id === dp.id)) d.departments.push(dp); 
+    pushAct(d, act); 
+  }, `Agregar departamento ${dp.id}`);
   loadSettings();
-}
-async function delDept(id) {
-  if (!confirm("¿Eliminar este departamento?")) return;
-  const act = mkAct("CONFIG", `Eliminó el departamento ${id}`);
-  await commit(d => { d.departments = d.departments.filter(x => x.id !== id); pushAct(d, act); }, `Eliminar departamento ${id}`);
-  loadSettings();
+  updateUI();
 }
 
-/* ---------- Perfil ---------- */
+async function delDept(id) {
+  if (!confirm(`¿Seguro que deseas eliminar el departamento ${id}?`)) return;
+  const act = mkAct("CONFIG", `Eliminó el departamento: ${id}`);
+  await commit(d => { d.departments = d.departments.filter(x => x.id !== id); pushAct(d, act); }, `Eliminar departamento ${id}`);
+  loadSettings();
+  updateUI();
+}
+
+/* ---------- Perfil de Dispositivo ---------- */
 function fillProfileName() { const d = appData.departments.find(x => x.id === $("prof-dept").value); if (d && !$("prof-name").value) $("prof-name").value = d.owner; }
 async function submitProfile(e) {
   e.preventDefault();
@@ -625,7 +963,7 @@ async function submitProfile(e) {
   profile = { department: S($("prof-dept").value), name: S($("prof-name").value.trim()) };
   localStorage.setItem("vecinos_user_profile", JSON.stringify(profile));
   closeModal("modal-profile"); updateProfileUI();
-  if (first) { const act = mkAct("DEVICE", `Nuevo dispositivo vinculado: ${author()}`); await commit(d => pushAct(d, act), `Nuevo dispositivo ${myDeviceId}`); }
+  if (first) { const act = mkAct("DEVICE", `Dispositivo vinculado: ${author()}`); await commit(d => pushAct(d, act), `Vinculación ${myDeviceId}`); }
 }
 function updateProfileUI() {
   const first = (profile.name || "").split(" ")[0];
@@ -636,19 +974,21 @@ function updateProfileUI() {
 
 /* ---------- Bitácora ---------- */
 function renderAct() {
-  const ICON = { INCOME: "arrow-down-left", EXPENSE: "arrow-up-right", DEVICE: "smartphone" };
+  const ICON = { INCOME: "arrow-down-left", EXPENSE: "arrow-up-right", DEVICE: "smartphone", CONFIG: "sliders" };
   $("timeline").innerHTML = appData.activities.length ? appData.activities.map(a => `
    <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
     <div class="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 flex-shrink-0"><i data-lucide="${ICON[a.type] || "settings"}" class="w-4 h-4"></i></div>
     <div class="min-w-0"><p class="font-medium text-slate-800">${esc(a.text)}</p><div class="mt-1 text-[11px] text-slate-400"><span class="font-semibold text-slate-600">${esc(a.author)}</span> • ${esc(a.date)} a las ${esc(a.time)}</div></div>
-   </div>`).join("") : `<div class="p-6 text-center text-xs text-slate-400">No hay actividades registradas.</div>`;
+   </div>`).join("") : `<div class="p-6 text-center text-xs text-slate-400">No hay movimientos en la bitácora.</div>`;
   icons();
 }
 
-/* ---------- Dashboard ---------- */
+/* ---------- Dashboard Central ---------- */
 function updateUI() {
+  checkNoticeExpiry();
   updateProfileUI(); notifSupport();
   $("header-bldg-name").textContent = appData.buildingName;
+
   let inc = 0, exp = 0, ic = 0, ec = 0; const cats = {}, paid = new Set(), month = today().slice(0, 7);
   appData.transactions.forEach(t => {
     if (t.type === "INCOME") { inc += t.amount; ic++; if (t.date.startsWith(month)) paid.add(t.department); }
@@ -656,34 +996,68 @@ function updateUI() {
   });
   const bal = inc - exp;
   $("total-balance").textContent = money(bal); $("total-income").textContent = money(inc); $("total-expense").textContent = money(exp);
-  $("income-count").textContent = `${ic} cuotas`; $("expense-count").textContent = `${ec} pagos`;
+  $("income-count").textContent = `${ic} cuotas`; $("expense-count").textContent = `${ec} gastos`;
+
   const total = appData.departments.length, pc = paid.size, pct = total ? Math.min(100, Math.round(pc / total * 100)) : 0;
-  $("pct").textContent = pct + "%"; $("bar").style.width = pct + "%";
+  $("pct").textContent = pct + "\%"; $("bar").style.width = pct + "%";
   $("paid-count").textContent = `${pc} de ${total}`; $("pending-count").textContent = Math.max(0, total - pc);
+
   const low = bal <= 1000 && ic > 0;
   $("low-banner").classList.toggle("hidden", !low);
-  if (low) $("low-text").textContent = `El saldo es de ${money(bal)} MXN. Conviene cobrar cuotas pendientes para la próxima pipa o poda.`;
+  if (low) $("low-text").textContent = `Saldo disponible de ${money(bal)} MXN. Podría no alcanzar para cubrir el próximo servicio.`;
+
+  // Banner y vigencia de avisos
   const n = appData.urgentNotice;
-  $("urgent-banner").classList.toggle("hidden", !n);
-  if (n) { $("urgent-text").textContent = n.text; $("urgent-meta").textContent = `Publicado por ${n.author} (${n.date})`; }
-  $("panel-notice").textContent = n ? `"${n.text}" — ${n.author}` : "Sin avisos urgentes.";
+  const isNoticeActive = n && (!n.expiresAt || n.expiresAt > Date.now());
+  $("urgent-banner").classList.toggle("hidden", !isNoticeActive);
+  if (isNoticeActive) {
+    $("urgent-text").textContent = n.text;
+    $("urgent-meta").textContent = `Emitido por ${n.author} (${n.date})`;
+    if (n.expiresAt) {
+      const remDays = Math.ceil((n.expiresAt - Date.now()) / (1000 * 60 * 60 * 24));
+      $("urgent-expires").textContent = `• Vence en ${remDays} día(s)`;
+    } else {
+      $("urgent-expires").textContent = "";
+    }
+  }
+  $("panel-notice").textContent = isNoticeActive ? `"${n.text}" — ${n.author}` : "Sin avisos urgentes activos.";
+
+  // Resumen del Rol de Pipas y Poda en el Inicio
+  const turns = appData.serviceTurns || [];
+  const lastWater = turns.find(t => t.serviceType === "Agua");
+  const lastPrune = turns.find(t => t.serviceType === "Poda");
+
+  $("role-summary-water").innerHTML = lastWater 
+    ? `Último pedido: <strong>${esc(lastWater.department)}</strong> (${esc(lastWater.resident)}) el ${esc(lastWater.date)}`
+    : `Sin registros de pipa aún.`;
+
+  $("role-summary-pruning").innerHTML = lastPrune 
+    ? `Último pedido: <strong>${esc(lastPrune.department)}</strong> (${esc(lastPrune.resident)}) el ${esc(lastPrune.date)}`
+    : `Sin registros de poda aún.`;
+
   const unread = appData.activities.filter(a => a.timestamp > lastSeen).length;
   $("bell-badge").textContent = unread > 9 ? "9+" : unread; $("bell-badge").classList.toggle("hidden", !unread);
   const l = appData.activities[0];
   $("dash-last").textContent = l ? `${l.text} por ${l.author} (${l.time})` : "Sin actividades";
   const r = appData.transactions.slice(0, 5);
   $("recent-list").innerHTML = r.length ? r.map(txRow).join("") : `<div class="p-6 text-center text-xs text-slate-400">Sin movimientos registrados.</div>`;
+
   renderQuick(); renderChart(cats); icons();
 }
+
 function renderChart(cats) {
   const labels = Object.keys(cats), cv = $("expenseChart");
   cv.style.display = labels.length ? "block" : "none"; $("chart-empty").classList.toggle("hidden", !!labels.length);
   if (chart) chart.destroy();
   if (!labels.length || !window.Chart) return;
-  chart = new Chart(cv, { type: "doughnut", data: { labels, datasets: [{ data: Object.values(cats), backgroundColor: ["#38bdf8", "#4ade80", "#fbbf24", "#f87171", "#a78bfa", "#94a3b8"], borderWidth: 2, borderColor: "#fff" }] }, options: { cutout: "68%", plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } } });
+  chart = new Chart(cv, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data: Object.values(cats), backgroundColor: ["#38bdf8", "#4ade80", "#fbbf24", "#f87171", "#a78bfa", "#94a3b8"], borderWidth: 2, borderColor: "#fff" }] },
+    options: { cutout: "68%", plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } }
+  });
 }
 
-/* ---------- Exportar CSV (con escape y protección contra fórmulas) ---------- */
+/* ---------- Exportar CSV ---------- */
 function csvCell(v) {
   let s = String(v ?? "");
   if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
@@ -699,15 +1073,22 @@ function exportCSV() {
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-/* ---------- Arranque ---------- */
+/* ---------- Inicialización ---------- */
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-a]"); if (!b) return;
   const fn = { delTx, delProv, delDept }[b.dataset.a]; if (fn) fn(b.dataset.v);
 });
+
 document.addEventListener("DOMContentLoaded", () => {
-  $("nav").innerHTML = `<div class="flex justify-around max-w-4xl mx-auto">` + Object.entries(VIEWS).map(([k, [t, i]]) =>
-    `<button onclick="navTo('${k}')" id="nav-${k}" class="flex flex-col items-center p-1 ${k === "dashboard" ? "text-indigo-600" : "text-slate-400"}"><i data-lucide="${i}" class="w-5 h-5"></i><span class="text-[10px] font-medium mt-0.5">${t}</span></button>`).join("") + `</div>`;
-  readInviteLink(); updateUI(); sync();
+  $("nav").innerHTML = `<div class="flex justify-around items-center max-w-4xl mx-auto w-full">` + Object.entries(VIEWS).map(([k, [t, i]]) =>
+    `<button onclick="navTo('${k}')" id="nav-${k}" class="flex flex-col items-center justify-center p-1 w-full min-w-0 ${k === "dashboard" ? "text-indigo-600" : "text-slate-400"} hover:text-indigo-500 transition">
+      <i data-lucide="${i}" class="w-5 h-5 shrink-0"></i>
+      <span class="text-[10px] font-semibold mt-1 truncate max-w-full text-center">${t}</span>
+    </button>`).join("") + `</div>`;
+
+  readInviteLink();
+  updateUI();
+  sync();
   setInterval(() => { if (!busy) sync(); }, 30000);
 });
 </script>
