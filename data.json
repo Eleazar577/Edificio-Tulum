@@ -173,6 +173,16 @@
   ],
   "activities": [
     {
+      "id": "act-1790777627977mop",
+      "type": "DEVICE",
+      "text": "Nuevo dispositivo vinculado: Lic. Isis Elizabeth (Departamento 6)",
+      "author": "Lic. Isis Elizabeth (Departamento 6)",
+      "deviceId": "DEV-CZCF",
+      "time": "08:13 a.m.",
+      "date": "2026-09-30",
+      "timestamp": 1790777627978
+    },
+    {
       "id": "act-1790777433598rzp",
       "type": "DEVICE",
       "text": "Nuevo dispositivo vinculado: Lic. Isis Elizabeth (Departamento 6)",
