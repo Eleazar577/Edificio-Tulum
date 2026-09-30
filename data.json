@@ -1,7 +1,12 @@
 {
   "buildingName": "Edificio Tulum - Colonia Petrolera",
   "defaultFee": 250,
-  "urgentNotice": null,
+  "urgentNotice": {
+    "id": "notice-1790777764185",
+    "text": "Hola",
+    "author": "Lic. Isis Elizabeth (Departamento 6)",
+    "date": "30 sep, 08:16 a.m."
+  },
   "providers": [
     {
       "id": "prov-1790695888728",
@@ -172,6 +177,16 @@
     }
   ],
   "activities": [
+    {
+      "id": "act-17907777641897fe",
+      "type": "CONFIG",
+      "text": "Publicó aviso urgente: \"Hola\"",
+      "author": "Lic. Isis Elizabeth (Departamento 6)",
+      "deviceId": "DEV-BVFX",
+      "time": "08:16 a.m.",
+      "date": "2026-09-30",
+      "timestamp": 1790777764189
+    },
     {
       "id": "act-1790777627977mop",
       "type": "DEVICE",
