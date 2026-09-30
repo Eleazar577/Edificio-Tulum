@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Control Vecinal - Edificio</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Control Vecinal" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="referrer" content="no-referrer" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.441.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style type="text/tailwindcss">
+@layer components{
+ .inp{@apply w-full text-sm p-2.5 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-indigo-500}
+ .lbl{@apply block text-xs font-semibold text-slate-600 mb-1}
+ .card{@apply bg-white p-4 rounded-2xl shadow-sm border border-slate-200}
+ .btn{@apply bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition}
+ .modal{@apply fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4}
+ .box{@apply bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-3 max-h-[92vh] overflow-y-auto}
+ .h2{@apply font-bold text-base text-slate-900 flex items-center gap-2}
+}
+.no-scrollbar::-webkit-scrollbar{display:none}
+@media (max-width: 640px){
+  body{padding-bottom:82px}
+  header .header-action-text{display:none}
+  #main-actions{gap:.25rem}
+  #main-actions>button{padding:.55rem}
+  #main-actions .register-label{display:none}
+  #nav{padding:.35rem .15rem}
+  #nav .nav-inner{display:grid!important;grid-template-columns:repeat(6,1fr);gap:0}
+  #nav button{min-width:0;padding:.45rem .15rem}
+  #nav button span{font-size:9px;white-space:nowrap}
+  #nav button svg{width:18px;height:18px}
+  .mobile-page-tools{display:flex}
+}
+@media (min-width: 641px){.mobile-page-tools{display:none}}
+
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-24">
+
+<header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+ <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+   <div class="p-2 bg-indigo-600 rounded-xl"><i data-lucide="building-2" class="w-6 h-6"></i></div>
+   <div>
+    <h1 id="header-bldg-name" class="font-bold text-lg leading-tight truncate max-w-[150px] sm:max-w-xs">Mi Edificio</h1>
+    <div class="flex items-center gap-2 text-xs text-slate-400">
+     <span class="flex items-center gap-1"><span id="sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span><span id="sync-text">Conectando...</span></span>
+     <span>•</span>
+     <button onclick="openModal('modal-profile')" class="text-indigo-400 font-medium truncate max-w-[110px] sm:max-w-none flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i><span id="header-user-name">Identificarse</span></button>
+    </div>
+   </div>
+  </div>
+  <div id="main-actions" class="flex items-center gap-1.5">
+   <div class="relative">
+    <button onclick="togglePanel()" title="Notificaciones" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl relative">
+     <i data-lucide="bell" class="w-4 h-4"></i>
+     <span id="bell-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">0</span>
+    </button>
+    <div id="panel-notifications" class="absolute right-0 mt-2 w-80 max-w-[90vw] bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 z-50 p-4 hidden space-y-3">
+     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+      <h4 class="font-bold text-xs text-slate-700">Notificaciones</h4>
+      <button onclick="markRead()" class="text-[11px] text-slate-400 hover:text-indigo-600 font-medium">Marcar leídas</button>
+     </div>
+     <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+      <div><span class="font-bold block">Alertas en este dispositivo</span><span id="notif-status" class="text-[11px] text-slate-500"></span></div>
+      <button onclick="askNotifPermission()" class="btn !px-2.5 !py-1.5">Activar</button>
+     </div>
+     <div class="flex justify-between items-center"><span class="text-xs font-semibold text-slate-600">Aviso fijado</span><button onclick="newNotice()" class="text-xs text-indigo-600 font-bold">+ Emitir aviso</button></div>
+     <p id="panel-notice" class="text-xs text-slate-500 italic bg-amber-50 p-2 rounded-lg border border-amber-200"></p>
+     <div id="panel-feed" class="max-h-48 overflow-y-auto space-y-1.5 text-xs no-scrollbar"></div>
+    </div>
+   </div>
+   <button onclick="copyMagicLink()" class="p-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center gap-1 text-xs font-semibold"><i data-lucide="share-2" class="w-4 h-4"></i><span class="hidden sm:inline header-action-text">Invitar</span></button>
+   <button onclick="sync()" title="Refrescar" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+   <button onclick="openModal('modal-transaction')" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-4 h-4"></i><span class="register-label">Registrar</span></button>
+  </div>
+ </div>
+</header>
+
+<div id="urgent-banner" class="max-w-4xl mx-auto px-4 pt-3 hidden">
+ <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-between gap-3">
+  <div class="text-xs leading-tight"><strong class="block text-[10px] uppercase tracking-wider text-white/90">Aviso del edificio</strong><span id="urgent-text" class="font-medium text-sm"></span><span id="urgent-meta" class="block text-[10px] text-white/80 mt-0.5"></span></div>
+  <button onclick="$('urgent-banner').classList.add('hidden')" class="p-1.5 hover:bg-white/20 rounded-lg" title="Ocultar"><i data-lucide="x" class="w-4 h-4"></i></button>
+ </div>
+</div>
+<div id="low-banner" class="max-w-4xl mx-auto px-4 pt-3 hidden">
+ <div class="bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-3.5 text-xs"><strong class="block text-sm">Fondo de reserva bajo</strong><p id="low-text"></p></div>
+</div>
+<div id="setup-banner" class="max-w-4xl mx-auto px-4 pt-3 hidden">
+ <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 text-xs text-amber-900"><strong class="block text-sm">Aplicación sin conectar</strong><p>Configura tu repositorio en Ajustes o abre el enlace de invitación.</p><button onclick="navTo('settings')" class="underline font-bold text-indigo-700 mt-1">Abrir Ajustes</button></div>
+</div>
+
+<main class="max-w-4xl mx-auto px-4 py-4 space-y-4">
+ <section id="view-dashboard" class="space-y-4">
+  <div class="card !py-2.5 flex items-center justify-between text-xs text-slate-600">
+   <span class="truncate"><strong>Última acción:</strong> <span id="dash-last"></span></span>
+   <button onclick="navTo('activities')" class="text-indigo-600 font-semibold ml-2 flex-shrink-0">Ver bitácora</button>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+   <div class="card"><span class="text-xs font-semibold text-slate-500">Fondo en caja</span><h2 id="total-balance" class="text-2xl font-black text-slate-900">$0.00</h2></div>
+   <div class="card"><span class="text-xs font-semibold text-slate-500">Total recaudado</span><h2 id="total-income" class="text-2xl font-black text-indigo-600">$0.00</h2><span id="income-count" class="text-[11px] text-slate-400"></span></div>
+   <div class="card"><span class="text-xs font-semibold text-slate-500">Total gastado</span><h2 id="total-expense" class="text-2xl font-black text-rose-600">$0.00</h2><span id="expense-count" class="text-[11px] text-slate-400"></span></div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+   <div class="card flex flex-col items-center">
+    <h3 class="font-bold text-sm text-slate-700 mb-2 self-start">Gastos por categoría</h3>
+    <div class="relative w-full max-w-[210px] aspect-square flex items-center justify-center"><canvas id="expenseChart"></canvas></div>
+    <p id="chart-empty" class="text-xs text-slate-400 hidden">Sin gastos registrados.</p>
+   </div>
+   <div class="card">
+    <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-sm text-slate-700">Cumplimiento mensual</h3><span id="pct" class="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">0%</span></div>
+    <div class="w-full bg-slate-100 rounded-full h-3 mb-3"><div id="bar" class="bg-indigo-600 h-3 rounded-full transition-all" style="width:0%"></div></div>
+    <div class="bg-slate-50 rounded-xl p-3 text-xs text-slate-600 space-y-1">
+     <div class="flex justify-between"><span>Al corriente:</span><strong id="paid-count" class="text-emerald-700"></strong></div>
+     <div class="flex justify-between"><span>Pendientes:</span><strong id="pending-count" class="text-rose-600"></strong></div>
+    </div>
+   </div>
+  </div>
+  <div class="card">
+   <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-sm">Servicios rápidos</h3><button onclick="navTo('providers')" class="text-xs text-indigo-600 font-semibold">Ver directorio</button></div>
+   <div class="grid grid-cols-2 gap-2 mb-2">
+      <button onclick="openServiceRequest('Agua')" class="p-2.5 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-bold flex items-center justify-center gap-1.5"><i data-lucide="droplets" class="w-4 h-4"></i> Solicitar pipa</button>
+      <button onclick="openServiceRequest('Poda y Jardinería')" class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5"><i data-lucide="scissors" class="w-4 h-4"></i> Solicitar poda</button>
+    </div>
+    <div id="quick-providers" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+  </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+   <div class="p-4 border-b border-slate-100 flex justify-between items-center"><h3 class="font-bold text-sm">Movimientos recientes</h3><button onclick="navTo('transactions')" class="text-xs font-semibold text-indigo-600">Ver todo</button></div>
+   <div id="recent-list" class="divide-y divide-slate-100"></div>
+  </div>
+ </section>
+
+ <section id="view-transactions" class="hidden space-y-3"><div class="mobile-page-tools items-center justify-between mb-2">
+      <button onclick="goBack()" class="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Regresar
+      </button>
+      <button onclick="navTo('dashboard')" class="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-xl">
+        <i data-lucide="home" class="w-4 h-4"></i> Menú principal
+      </button>
+    </div>
+  <div class="card flex flex-wrap gap-2 items-center justify-between">
+   <div class="flex gap-2">
+    <select id="filter-type" onchange="renderTx()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg p-2"><option value="ALL">Todos</option><option value="INCOME">Cooperaciones</option><option value="EXPENSE">Gastos</option></select>
+    <select id="filter-category" onchange="renderTx()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg p-2"></select>
+   </div>
+   <button onclick="exportCSV()" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">Exportar CSV</button>
+  </div>
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"><div id="all-tx" class="divide-y divide-slate-100"></div></div>
+ </section>
+
+ <section id="view-activities" class="hidden"><div class="mobile-page-tools items-center justify-between mb-2">
+      <button onclick="goBack()" class="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Regresar
+      </button>
+      <button onclick="navTo('dashboard')" class="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-xl">
+        <i data-lucide="home" class="w-4 h-4"></i> Menú principal
+      </button>
+    </div>
+  <div class="card space-y-3">
+   <div class="border-b border-slate-100 pb-3"><h2 class="h2">Bitácora de actividades</h2><p class="text-xs text-slate-500">Quién registró o modificó datos.</p></div>
+   <div id="timeline" class="space-y-3"></div>
+  </div>
+ </section>
+
+ <section id="view-providers" class="hidden"><div class="mobile-page-tools items-center justify-between mb-2">
+      <button onclick="goBack()" class="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Regresar
+      </button>
+      <button onclick="navTo('dashboard')" class="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-xl">
+        <i data-lucide="home" class="w-4 h-4"></i> Menú principal
+      </button>
+    </div>
+  <div class="card space-y-4">
+   <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+    <div><h2 class="h2">Directorio de servicios</h2><p class="text-xs text-slate-500">Pipas, poda y fontanería.</p></div>
+    <button onclick="openModal('modal-provider')" class="btn">Nuevo proveedor</button>
+   </div>
+   <div class="text-[11px] text-slate-500 bg-slate-50 rounded-xl p-3">Usa <strong>WhatsApp</strong> para contactar rápidamente a un proveedor o <strong>Solicitudes</strong> para registrar quién pidió la pipa/poda y conservar el turno.</div>
+    <div id="full-providers" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+  </div>
+ </section>
+
+ <section id="view-settings" class="hidden space-y-4"><div class="mobile-page-tools items-center justify-between mb-2">
+      <button onclick="goBack()" class="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Regresar
+      </button>
+      <button onclick="navTo('dashboard')" class="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-xl">
+        <i data-lucide="home" class="w-4 h-4"></i> Menú principal
+      </button>
+    </div>
+  <div class="card space-y-3">
+   <h2 class="h2">Notificaciones del sistema</h2>
+   <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+    <span id="settings-notif" class="text-xs text-slate-500"></span>
+    <div class="flex gap-2"><button onclick="testNotif()" class="text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-300">Probar</button><button onclick="askNotifPermission()" class="btn">Solicitar permiso</button></div>
+   </div>
+   <p class="text-[11px] text-slate-400">Las alertas solo llegan mientras la app está abierta.</p>
+  </div>
+  <div class="card space-y-3">
+   <div class="flex justify-between items-center"><h2 class="h2">Mi identificador</h2><button onclick="openModal('modal-profile')" class="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1.5 rounded-xl">Cambiar</button></div>
+   <div class="bg-slate-50 p-3 rounded-xl flex justify-between text-xs"><strong id="settings-identity" class="text-indigo-700"></strong><span id="settings-device" class="font-mono text-slate-400"></span></div>
+  </div>
+  <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl space-y-2">
+   <h2 class="h2">Enlace de invitación</h2>
+   <p class="text-xs text-indigo-800">Incluye el token en el fragmento (#) del enlace, que no se envía a ningún servidor. Usa un token <strong>fine-grained</strong> limitado a este único repositorio con permiso Contents: Read and write. Si ya compartiste un enlace con tu token anterior, revócalo en GitHub y crea uno nuevo.</p>
+   <button onclick="copyMagicLink()" class="btn">Copiar enlace</button>
+  </div>
+  <div class="card space-y-3">
+   <h2 class="h2">Conexión GitHub</h2>
+   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div><label class="lbl">Usuario</label><input id="gh-owner" class="inp" /></div>
+    <div><label class="lbl">Repositorio</label><input id="gh-repo" class="inp" /></div>
+    <div><label class="lbl">Token</label><input id="gh-token" type="password" autocomplete="off" class="inp font-mono" /></div>
+   </div>
+   <button onclick="saveGh()" class="btn">Guardar y sincronizar</button>
+  </div>
+  <div class="card space-y-3">
+   <h2 class="h2">Datos del edificio</h2>
+   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div><label class="lbl">Nombre</label><input id="set-name" class="inp" maxlength="80" /></div>
+    <div><label class="lbl">Cuota ordinaria ($)</label><input id="set-fee" type="number" min="0" class="inp" /></div>
+   </div>
+   <button onclick="saveBuilding()" class="btn">Actualizar datos</button>
+  </div>
+  <div class="card space-y-3">
+   <div class="flex justify-between items-center"><h2 class="h2">Departamentos</h2><button onclick="openModal('modal-dept')" class="btn !bg-slate-900">Agregar</button></div>
+   <div id="departments" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+  </div>
+ </section>
+
+  <section id="view-requests" class="hidden space-y-4">
+   <div class="mobile-page-tools items-center justify-between">
+      <button onclick="goBack()" class="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Regresar
+      </button>
+      <button onclick="navTo('dashboard')" class="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-xl">
+        <i data-lucide="home" class="w-4 h-4"></i> Menú principal
+      </button>
+    </div>
+    <div class="card space-y-4">
+      <div class="border-b border-slate-100 pb-3">
+        <h2 class="h2"><i data-lucide="clipboard-list" class="w-5 h-5"></i> Solicitudes de servicios</h2>
+        <p class="text-xs text-slate-500">Controla quién solicitó la pipa o la poda y lleva un turno histórico.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button onclick="openServiceRequest('Agua')" class="p-4 rounded-2xl border border-cyan-200 bg-cyan-50 text-left hover:bg-cyan-100">
+          <span class="flex items-center gap-2 font-bold text-sm text-cyan-900"><i data-lucide="droplets" class="w-5 h-5"></i> Solicitar pipa</span>
+          <span id="turn-agua" class="block text-[11px] text-cyan-700 mt-1"></span>
+        </button>
+        <button onclick="openServiceRequest('Poda y Jardinería')" class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-left hover:bg-emerald-100">
+          <span class="flex items-center gap-2 font-bold text-sm text-emerald-900"><i data-lucide="scissors" class="w-5 h-5"></i> Solicitar poda</span>
+          <span id="turn-poda" class="block text-[11px] text-emerald-700 mt-1"></span>
+        </button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h3 class="font-bold text-sm mb-2">Últimas solicitudes de pipa</h3>
+          <div id="requests-agua" class="space-y-2"></div>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm mb-2">Últimas solicitudes de poda</h3>
+          <div id="requests-poda" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+ </main>
+
+<nav id="nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 py-1.5 shadow-lg"></nav>
+
+
+<div id="modal-notice" class="modal hidden">
+ <div class="box">
+  <div class="flex justify-between items-center border-b border-slate-100 pb-2"><h3 class="font-bold">Emitir aviso</h3><button onclick="closeModal('modal-notice')" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+  <form onsubmit="submitNotice(event)" class="space-y-3">
+   <div><label class="lbl">Aviso</label><textarea id="notice-text" class="inp min-h-[90px]" maxlength="200" required></textarea></div>
+   <div><label class="lbl">Vigencia</label><select id="notice-days" class="inp"><option value="1">1 día</option><option value="3" selected>3 días</option><option value="7">7 días</option><option value="30">30 días</option></select></div>
+   <button type="submit" class="btn w-full !py-3">Publicar aviso</button>
+  </form>
+ </div>
+</div>
+
+
+<div id="modal-service-request" class="modal hidden">
+ <div class="box">
+  <div class="flex justify-between items-center border-b border-slate-100 pb-2"><h3 class="font-bold" id="service-request-title">Solicitar servicio</h3><button onclick="closeModal('modal-service-request')" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+  <form onsubmit="submitServiceRequest(event)" class="space-y-3">
+   <input type="hidden" id="service-type">
+   <div><label class="lbl">Departamento</label><select id="service-dept" class="inp" required></select></div>
+   <div><label class="lbl">Residente</label><input id="service-resident" class="inp" readonly></div>
+   <div><label class="lbl">Detalle</label><input id="service-notes" class="inp" maxlength="120" placeholder="Ej. cisterna vacía / poda de jardín"></div>
+   <button type="submit" class="btn w-full !py-3">Registrar solicitud</button>
+  </form>
+ </div>
+</div>
+
+<div id="modal-transaction" class="modal hidden">
+ <div class="box !max-w-md">
+  <div class="flex justify-between items-center border-b border-slate-100 pb-3"><h3 class="font-bold text-lg" id="tx-title">Registrar pago de vecino</h3><button onclick="closeModal('modal-transaction')" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+  <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+   <button type="button" id="tab-income" onclick="setTxType('INCOME')" class="py-2 rounded-lg text-xs font-bold">Cooperación (+)</button>
+   <button type="button" id="tab-expense" onclick="setTxType('EXPENSE')" class="py-2 rounded-lg text-xs font-bold">Gasto (-)</button>
+  </div>
+  <form onsubmit="submitTx(event)" class="space-y-3">
+   <input type="hidden" id="tx-type" value="INCOME" />
+   <div id="block-income" class="space-y-3">
+    <div><label class="lbl">Departamento</label><select id="tx-dept" onchange="fillResident()" class="inp"></select></div>
+    <div><label class="lbl">Residente</label><input id="tx-resident" class="inp" maxlength="80" /></div>
+   </div>
+   <div id="block-expense" class="space-y-3 hidden">
+    <div><label class="lbl">Categoría</label><select id="tx-category" onchange="fillProviderOptions()" class="inp"></select></div>
+    <div><label class="lbl">Proveedor</label><select id="tx-provider-select" onchange="$('tx-provider').value=this.value" class="inp mb-1.5"></select><input id="tx-provider" class="inp" maxlength="80" placeholder="O escribe el nombre" /></div>
+   </div>
+   <div class="grid grid-cols-2 gap-3">
+    <div><label class="lbl">Importe ($ MXN)</label><input id="tx-amount" type="number" step="0.5" min="0.5" class="inp font-bold" required /></div>
+    <div><label class="lbl">Fecha</label><input id="tx-date" type="date" class="inp" required /></div>
+   </div>
+   <div><label class="lbl">Detalle</label><input id="tx-notes" class="inp" maxlength="120" placeholder="Ej. Pipa de 10,000L cisterna norte" /></div>
+   <button type="submit" class="btn w-full !py-3 !text-sm">Guardar movimiento</button>
+  </form>
+ </div>
+</div>
+
+<div id="modal-profile" class="modal hidden">
+ <div class="box">
+  <h3 class="font-bold text-lg text-center" id="profile-title">Identifica tu dispositivo</h3>
+  <p class="text-xs text-slate-500 text-center">Para que tus vecinos sepan quién registra los movimientos.</p>
+  <form onsubmit="submitProfile(event)" class="space-y-3">
+   <div><label class="lbl">Tu departamento</label><select id="prof-dept" onchange="fillProfileName()" class="inp"></select></div>
+   <div><label class="lbl">Tu nombre completo</label><input id="prof-name" class="inp" maxlength="80" required /></div>
+   <button type="submit" class="btn w-full">Guardar mi identidad</button>
+  </form>
+ </div>
+</div>
+
+<div id="modal-provider" class="modal hidden">
+ <div class="box">
+  <div class="flex justify-between items-center border-b border-slate-100 pb-2"><h3 class="font-bold">Agregar proveedor</h3><button onclick="closeModal('modal-provider')" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+  <form id="form-provider" onsubmit="submitProvider(event)" class="space-y-3">
+   <div><label class="lbl">Tipo de servicio</label><select id="prov-category" class="inp"></select></div>
+   <div><label class="lbl">Nombre</label><input id="prov-name" class="inp" maxlength="80" required /></div>
+   <div><label class="lbl">Teléfono</label><input id="prov-phone" type="tel" class="inp" maxlength="20" required /></div>
+   <div><label class="lbl">Notas / tarifa</label><input id="prov-notes" class="inp" maxlength="120" /></div>
+   <button type="submit" class="btn w-full">Guardar proveedor</button>
+  </form>
+ </div>
+</div>
+
+<div id="modal-dept" class="modal hidden">
+ <div class="box">
+  <div class="flex justify-between items-center border-b border-slate-100 pb-2"><h3 class="font-bold">Agregar departamento</h3><button onclick="closeModal('modal-dept')" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+  <form id="form-dept" onsubmit="submitDept(event)" class="space-y-3">
+   <div><label class="lbl">Identificador</label><input id="dept-id" class="inp" maxlength="40" placeholder="Depto 101" required /></div>
+   <div><label class="lbl">Residente</label><input id="dept-owner" class="inp" maxlength="80" required /></div>
+   <div><label class="lbl">Teléfono (opcional)</label><input id="dept-phone" type="tel" class="inp" maxlength="20" /></div>
+   <button type="submit" class="btn w-full">Guardar departamento</button>
+  </form>
+ </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- Utilidades y seguridad ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const S = v => String(v ?? "").slice(0, 300);
+const money = n => "$" + (Number(n) || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 });
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const digits = s => String(s || "").replace(/\D/g, "");
+const jload = (k, f) => { try { return JSON.parse(localStorage.getItem(k)) || f; } catch { return f; } };
+const b64e = s => { let x = ""; new TextEncoder().encode(s).forEach(c => x += String.fromCharCode(c)); return btoa(x); };
+const b64d = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), c => c.charCodeAt(0)));
+const icons = () => window.lucide && lucide.createIcons();
+
+/* Reconstruye los datos con tipos estrictos: lo que llegue de GitHub nunca se usa "tal cual" */
+function normalize(d) {
+  d = d && typeof d === "object" ? d : {};
+  const A = x => Array.isArray(x) ? x : [];
+  const n = d.urgentNotice;
+  return {
+    buildingName: S(d.buildingName) || "Mi Edificio",
+    defaultFee: Number(d.defaultFee) || 0,
+    urgentNotice: n && n.text ? {
+      id: S(n.id), text: S(n.text), author: S(n.author), date: S(n.date),
+      expiresAt: S(n.expiresAt)
+    } : null,
+    serviceRequests: A(d.serviceRequests).map(r => ({
+      id: S(r.id), service: r.service === "Poda y Jardinería" ? "Poda y Jardinería" : "Agua",
+      department: S(r.department), resident: S(r.resident), date: S(r.date),
+      notes: S(r.notes), status: S(r.status) || "PENDIENTE",
+      createdBy: S(r.createdBy), timestamp: Number(r.timestamp) || 0
+    })),
+    serviceTurns: {
+      Agua: A(d.serviceTurns?.Agua).map(r => ({
+        requestId: S(r.requestId), department: S(r.department), resident: S(r.resident),
+        date: S(r.date), timestamp: Number(r.timestamp) || 0
+      })),
+      "Poda y Jardinería": A(d.serviceTurns?.["Poda y Jardinería"]).map(r => ({
+        requestId: S(r.requestId), department: S(r.department), resident: S(r.resident),
+        date: S(r.date), timestamp: Number(r.timestamp) || 0
+      }))
+    },
+    providers: A(d.providers).map(p => ({ id: S(p.id), name: S(p.name), category: S(p.category), phone: S(p.phone), notes: S(p.notes) })),
+    departments: A(d.departments).map(x => ({ id: S(x.id), owner: S(x.owner), phone: S(x.phone) })),
+    transactions: A(d.transactions).map(t => ({
+      id: S(t.id), type: t.type === "EXPENSE" ? "EXPENSE" : "INCOME", amount: Number(t.amount) || 0, date: S(t.date), notes: S(t.notes),
+      createdBy: S(t.createdBy) || "(Registro inicial / Admin)", deviceId: S(t.deviceId) || "LEGACY",
+      department: S(t.department), resident: S(t.resident), category: S(t.category), provider: S(t.provider)
+    })),
+    activities: A(d.activities).slice(0, 50).map(a => ({ id: S(a.id), type: S(a.type), text: S(a.text), author: S(a.author), deviceId: S(a.deviceId), time: S(a.time), date: S(a.date), timestamp: Number(a.timestamp) || 0 }))
+  };
+}
+
+/* ---------- Estado ---------- */
+const CATS = [["Agua", "Agua / Pipas"], ["Poda y Jardinería", "Poda y Jardinería"], ["Mantenimiento General", "Mantenimiento y Fontanería"], ["Luz Áreas Comunes", "Luz CFE"], ["Limpieza", "Limpieza"], ["Otros", "Otros"]];
+const DEFAULT_DATA = {
+  buildingName: "Privada Las Palmas", defaultFee: 500, urgentNotice: null,
+  serviceRequests: [],
+  serviceTurns: { Agua: [], "Poda y Jardinería": [] },
+  providers: [
+    { id: "prov-1", name: "Pipas San Jerónimo (Don Mario)", category: "Agua", phone: "9381234567", notes: "Pipa de 10,000L ($850 MXN)" },
+    { id: "prov-2", name: "Jardinería y Poda El Roble", category: "Poda y Jardinería", phone: "9387654321", notes: "Poda integral y retiro de ramas ($600 MXN)" }
+  ],
+  departments: [
+    { id: "Depto 101", owner: "Carlos Ramírez", phone: "" }, { id: "Depto 102", owner: "Beatriz López", phone: "" },
+    { id: "Depto 201", owner: "Mariana Sánchez", phone: "" }, { id: "Depto 202", owner: "Jorge González", phone: "" }
+  ],
+  transactions: [], activities: []
+};
+let appData = normalize(jload("vecinos_app_data", DEFAULT_DATA));
+let gh = jload("vecinos_gh_config", { owner: "", repo: "", token: "" });
+let profile = jload("vecinos_user_profile", { name: "", department: "" });
+let lastSeen = parseInt(localStorage.getItem("vecinos_last_seen") || "0");
+let myDeviceId = localStorage.getItem("vecinos_device_id");
+if (!myDeviceId) { myDeviceId = "DEV-" + Math.random().toString(36).slice(2, 6).toUpperCase(); localStorage.setItem("vecinos_device_id", myDeviceId); }
+let fileSha = null, chart = null, busy = false, pending = [];
+const VIEWS = {
+  dashboard: ["Inicio", "layout-dashboard"],
+  transactions: ["Movimientos", "receipt"],
+  activities: ["Bitácora", "shield-check"],
+  providers: ["Servicios", "contact"],
+  requests: ["Solicitudes", "clipboard-list"],
+  settings: ["Ajustes", "settings"]
+};
+
+const author = () => profile.name && profile.department ? `${profile.name} (${profile.department})` : profile.name ? `${profile.name} [${myDeviceId}]` : `Dispositivo ${myDeviceId}`;
+const persist = () => localStorage.setItem("vecinos_app_data", JSON.stringify(appData));
+const canWrite = () => gh.owner && gh.repo && gh.token;
+const apiUrl = () => `https://api.github.com/repos/${encodeURIComponent(gh.owner)}/${encodeURIComponent(gh.repo)}/contents/data.json`;
+
+function mkAct(type, text) {
+  const n = new Date();
+  return { id: "act-" + Date.now() + Math.random().toString(36).slice(2, 5), type, text: S(text), author: S(author()), deviceId: myDeviceId, time: n.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }), date: today(), timestamp: Date.now() };
+}
+const pushAct = (d, a) => { d.activities.unshift(a); d.activities = d.activities.slice(0, 50); };
+
+/* ---------- Sincronización con GitHub (con manejo de conflictos) ---------- */
+function setSync(text, cls) { $("sync-text").textContent = text; $("sync-dot").className = "w-2 h-2 rounded-full " + cls; }
+
+async function pull() {
+  const headers = { Accept: "application/vnd.github+json" };
+  if (gh.token) headers.Authorization = `Bearer ${gh.token}`;
+  const res = await fetch(apiUrl(), { headers, cache: "no-store" });
+  if (res.status === 404) return "none";
+  if (!res.ok) return "err";
+  const json = await res.json();
+  fileSha = json.sha;
+  const incoming = normalize(JSON.parse(b64d(json.content)));
+  notifyNew(incoming);
+  appData = incoming;
+  return "ok";
+}
+
+async function put(msg) {
+  const body = { message: `${msg} [por ${author()}]`.slice(0, 200), content: b64e(JSON.stringify(appData, null, 2)) };
+  if (fileSha) body.sha = fileSha;
+  const res = await fetch(apiUrl(), {
+    method: "PUT",
+    headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${gh.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (res.ok) { fileSha = (await res.json()).content.sha; return "ok"; }
+  return res.status === 409 || res.status === 422 ? "conflict" : "err";
+}
+
+/* Cada cambio es una función que se aplica sobre los datos más recientes. Si hay conflicto,
+   se vuelve a descargar y se reaplica: nadie pierde sus registros. */
+async function commit(mutator, msg) {
+  pending.push({ mutator, msg });
+  mutator(appData); persist(); updateUI();
+  await flush();
+}
+
+async function flush() {
+  if (busy) return;
+  if (!canWrite()) { setSync("Guardado local", "bg-amber-400"); return; }
+  busy = true; setSync("Guardando...", "bg-amber-400");
+  try {
+    let ok = false;
+    for (let i = 0; i < 4 && pending.length; i++) {
+      const r = await put(pending.map(p => p.msg).join("; "));
+      if (r === "ok") { pending = []; ok = true; break; }
+      if (r !== "conflict") break;
+      if ((await pull()) === "err") break;
+      pending.forEach(p => p.mutator(appData));
+    }
+    persist(); updateUI();
+    setSync(ok || !pending.length ? "GitHub guardado" : "Error en GitHub", ok || !pending.length ? "bg-emerald-400" : "bg-rose-500");
+  } catch (e) { console.error(e); setSync("Error de red", "bg-rose-500"); }
+  busy = false;
+}
+
+async function sync() {
+  if (!gh.owner || !gh.repo) { $("setup-banner").classList.remove("hidden"); setSync("Sin conectar", "bg-slate-400"); updateUI(); return; }
+  $("setup-banner").classList.add("hidden");
+  if (busy) return;
+  busy = true; setSync("Sincronizando...", "bg-amber-400");
+  try {
+    const r = await pull();
+    if (r === "ok") { pending.forEach(p => p.mutator(appData)); persist(); setSync("GitHub sincronizado", "bg-emerald-400"); }
+    else if (r === "none" && gh.token) { pending.push({ mutator: d => pushAct(d, mkAct("SYSTEM", "Inicialización de base de datos")), msg: "Inicializar data.json" }); pending[0].mutator(appData); }
+    else setSync("Error al sincronizar", "bg-rose-500");
+  } catch (e) { console.error(e); setSync("Modo local (sin red)", "bg-slate-400"); }
+  busy = false;
+  if (pending.length && canWrite()) await flush();
+  updateUI();
+}
+
+/* ---------- Enlace de invitación (token en el fragmento #, no en la query) ---------- */
+function readInviteLink() {
+  const p = new URLSearchParams(location.hash.slice(1) + "&" + location.search.slice(1));
+  const owner = p.get("owner"), repo = p.get("repo"), token = p.get("token");
+  if (!owner && !repo && !token) return;
+  gh = { owner: owner || gh.owner, repo: repo || gh.repo, token: token || gh.token };
+  localStorage.setItem("vecinos_gh_config", JSON.stringify(gh));
+  history.replaceState({}, document.title, location.pathname);
+  if (!profile.name) setTimeout(() => openModal("modal-profile", true), 800);
+}
+
+function copyMagicLink() {
+  if (!gh.token || !gh.owner || !gh.repo) { alert("Primero guarda tu conexión en Ajustes."); navTo("settings"); return; }
+  if (!confirm("Este enlace da acceso de escritura al repositorio a quien lo reciba. Úsalo solo con un token fine-grained limitado a este repo y compártelo solo con vecinos de confianza. ¿Continuar?")) return;
+  const url = `${location.origin}${location.pathname}#owner=${encodeURIComponent(gh.owner)}&repo=${encodeURIComponent(gh.repo)}&token=${encodeURIComponent(gh.token)}`;
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => alert("Enlace copiado."));
+  else prompt("Copia este enlace:", url);
+}
+
+function saveGh() {
+  const owner = $("gh-owner").value.trim(), repo = $("gh-repo").value.trim(), token = $("gh-token").value.trim();
+  if (!/^[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(repo)) { alert("Usuario o repositorio no válidos."); return; }
+  gh = { owner, repo, token };
+  localStorage.setItem("vecinos_gh_config", JSON.stringify(gh));
+  sync();
+}
+
+/* ---------- Notificaciones ---------- */
+function notifSupport() {
+  const ok = "Notification" in window, p = ok ? Notification.permission : "";
+  const label = !ok ? "No soportado" : p === "granted" ? "Activas en este equipo" : p === "denied" ? "Bloqueadas en el navegador" : "Sin activar";
+  $("notif-status").textContent = label; $("settings-notif").textContent = label;
+  return ok && p === "granted";
+}
+async function askNotifPermission() {
+  if (!("Notification" in window)) return alert("Tu navegador no soporta notificaciones.");
+  await Notification.requestPermission(); notifSupport();
+}
+function notify(title, body) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  try { new Notification(title, { body, vibrate: [150, 100] }); }
+  catch { navigator.serviceWorker?.ready.then(r => r.showNotification(title, { body })); }
+}
+function testNotif() { Notification.permission === "granted" ? notify("Prueba", "Las alertas funcionan en este dispositivo.") : askNotifPermission(); }
+function notifyNew(inc) {
+  const seen = new Set(appData.transactions.map(t => t.id));
+  inc.transactions.filter(t => !seen.has(t.id) && t.deviceId !== myDeviceId).forEach(t =>
+    t.type === "EXPENSE" ? notify(`Pago de servicio: ${t.category}`, `${t.provider} por ${money(t.amount)}. Registrado por ${t.createdBy}`)
+                         : notify("Nueva cuota registrada", `${t.department} abonó ${money(t.amount)}.`));
+  const n = inc.urgentNotice;
+  if (noticeIsActive(n) && (!appData.urgentNotice || appData.urgentNotice.id !== n.id) && !n.author.includes(myDeviceId)) notify("Aviso del edificio", n.text);
+}
+function togglePanel() { const p = $("panel-notifications"); p.classList.toggle("hidden"); if (!p.classList.contains("hidden")) renderFeed(); }
+function markRead() { lastSeen = Date.now(); localStorage.setItem("vecinos_last_seen", String(lastSeen)); togglePanel(); updateUI(); }
+function renderFeed() {
+  const f = appData.activities.slice(0, 6);
+  $("panel-feed").innerHTML = f.length ? f.map(a => `<div class="p-2 bg-slate-50 rounded-xl border border-slate-100"><p class="font-medium text-slate-800 leading-tight">${esc(a.text)}</p><span class="text-[10px] text-slate-400">${esc(a.author)} • ${esc(a.time)}</span></div>`).join("") : `<p class="text-slate-400 italic">Sin actividades recientes.</p>`;
+}
+function newNotice() {
+  $("notice-text").value = "";
+  $("notice-days").value = "3";
+  openModal("modal-notice");
+}
+async function submitNotice(e) {
+  e.preventDefault();
+  const text = S($("notice-text").value.trim()).slice(0, 200);
+  const days = Math.max(1, parseInt($("notice-days").value, 10) || 3);
+  if (!text) return;
+  const expires = new Date(Date.now() + days * 86400000);
+  const notice = {
+    id: "notice-" + Date.now(),
+    text,
+    author: S(author()),
+    date: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+    expiresAt: expires.toISOString()
+  };
+  const act = mkAct("CONFIG", `Publicó aviso urgente: "${text}" (${days} días)`);
+  closeModal("modal-notice");
+  notify("Aviso del edificio", text);
+  await commit(d => { d.urgentNotice = notice; pushAct(d, act); }, "Publicar aviso");
+}
+
+
+function noticeIsActive(n) {
+  return !!(n && n.text && (!n.expiresAt || new Date(n.expiresAt).getTime() > Date.now()));
+}
+async function expireNoticeIfNeeded() {
+  if (appData.urgentNotice && !noticeIsActive(appData.urgentNotice)) {
+    appData.urgentNotice = null;
+    persist();
+    if (canWrite()) {
+      pending.push({mutator: d => { d.urgentNotice = null; }, msg: "Vencer aviso"});
+      if (!busy) await flush();
+    }
+  }
+}
+function formatDateShort(v) {
+  if (!v) return "";
+  const d = new Date(v);
+  return isNaN(d) ? String(v) : d.toLocaleDateString("es-MX", {day:"2-digit", month:"short", year:"numeric"});
+}
+function getTurnInfo(service) {
+  const arr = appData.serviceTurns?.[service] || [];
+  if (!arr.length) return {last:null, next:"Sin solicitudes anteriores. Tú puedes ser el primero."};
+  const last = arr[arr.length - 1];
+  const d = appData.departments.map(x=>x.id).filter(Boolean);
+  const used = new Set(arr.slice(-d.length).map(x=>x.department));
+  const next = d.find(x=>!used.has(x)) || "Todos han tenido turno";
+  return {last, next};
+}
+function renderRequests() {
+  const agua = appData.serviceRequests.filter(r=>r.service==="Agua").slice(0,8);
+  const poda = appData.serviceRequests.filter(r=>r.service==="Poda y Jardinería").slice(0,8);
+  $("requests-agua").innerHTML = agua.length ? agua.map(requestRow).join("") : `<div class="text-xs text-slate-400 p-3 bg-slate-50 rounded-xl">Sin solicitudes.</div>`;
+  $("requests-poda").innerHTML = poda.length ? poda.map(requestRow).join("") : `<div class="text-xs text-slate-400 p-3 bg-slate-50 rounded-xl">Sin solicitudes.</div>`;
+  const ta = getTurnInfo("Agua"), tp = getTurnInfo("Poda y Jardinería");
+  $("turn-agua").textContent = ta.last ? `Última: ${ta.last.department} (${formatDateShort(ta.last.date)}) · Siguiente sugerido: ${ta.next}` : ta.next;
+  $("turn-poda").textContent = tp.last ? `Última: ${tp.last.department} (${formatDateShort(tp.last.date)}) · Siguiente sugerido: ${tp.next}` : tp.next;
+  icons();
+}
+function requestRow(r) {
+  const label = r.service==="Agua" ? "Pipa" : "Poda";
+  return `<div class="p-3 rounded-xl border border-slate-200 bg-white">
+    <div class="flex justify-between gap-2">
+      <div><strong class="text-xs">${esc(r.department)} · ${esc(r.resident)}</strong>
+      <p class="text-[11px] text-slate-500">${esc(r.notes || label)}</p></div>
+      <span class="text-[10px] font-bold px-2 py-1 rounded-lg ${r.status==="COMPLETADA"?"bg-emerald-50 text-emerald-700":"bg-amber-50 text-amber-700"}">${esc(r.status)}</span>
+    </div>
+    <div class="text-[10px] text-slate-400 mt-2">${esc(formatDateShort(r.date))} · Registró: ${esc(r.createdBy || "—")}</div>
+  </div>`;
+}
+function openServiceRequest(service) {
+  $("service-type").value = service;
+  $("service-request-title").textContent = service === "Agua" ? "Solicitar pipa" : "Solicitar poda";
+  fillSelect("service-dept", appData.departments.map(d=>[d.id, `${d.id} - ${d.owner}`]), profile.department);
+  const d = appData.departments.find(x=>x.id === $("service-dept").value);
+  $("service-resident").value = d ? d.owner : "";
+  $("service-dept").onchange = () => {
+    const x = appData.departments.find(y=>y.id === $("service-dept").value);
+    $("service-resident").value = x ? x.owner : "";
+  };
+  $("service-notes").value = "";
+  openModal("modal-service-request");
+}
+async function submitServiceRequest(e) {
+  e.preventDefault();
+  const service = $("service-type").value;
+  const dept = $("service-dept").value;
+  const d = appData.departments.find(x=>x.id===dept);
+  if (!service || !dept || !d) return;
+  const req = {
+    id:"req-"+Date.now()+Math.random().toString(36).slice(2,5),
+    service, department:dept, resident:d.owner, date:today(),
+    notes:S($("service-notes").value), status:"PENDIENTE", createdBy:S(author()), timestamp:Date.now()
+  };
+  const act = mkAct("SERVICE", `Solicitó ${service==="Agua"?"pipa":"poda"}: ${dept}`);
+  closeModal("modal-service-request"); e.target.reset();
+  await commit(data => {
+    data.serviceRequests.unshift(req);
+    if (!data.serviceTurns) data.serviceTurns = {Agua:[], "Poda y Jardinería":[]};
+    if (!data.serviceTurns[service]) data.serviceTurns[service] = [];
+    data.serviceTurns[service].push({requestId:req.id,department:dept,resident:d.owner,date:today(),timestamp:Date.now()});
+    pushAct(data, act);
+  }, `Solicitar ${service==="Agua"?"pipa":"poda"} ${dept}`);
+  renderRequests();
+}
+function goBack() {
+  const order = ["dashboard","transactions","activities","providers","requests","settings"];
+  const current = Object.keys(VIEWS).find(k => !$("view-"+k).classList.contains("hidden")) || "dashboard";
+  const i = order.indexOf(current);
+  navTo(i > 0 ? order[i-1] : "dashboard");
+}
+
+/* ---------- Navegación y modales ---------- */
+function navTo(v) {
+  Object.keys(VIEWS).forEach(x => {
+    $("view-" + x).classList.toggle("hidden", x !== v);
+    const b = $("nav-" + x); b.classList.toggle("text-indigo-600", x === v); b.classList.toggle("text-slate-400", x !== v);
+  });
+  ({ transactions: renderTx, activities: renderAct, providers: renderProv, requests: renderRequests, settings: loadSettings }[v] || (() => {}))();
+  icons();
+}
+function openModal(id, welcome) {
+  $(id).classList.remove("hidden");
+  if (id === "modal-transaction") {
+    $("tx-date").value = today(); $("tx-amount").value = appData.defaultFee || "";
+    fillSelect("tx-dept", appData.departments.map(d => [d.id, `${d.id} - ${d.owner}`])); fillResident(); setTxType($("tx-type").value); fillProviderOptions();
+  } else if (id === "modal-profile") {
+    fillSelect("prof-dept", [["", "-- Selecciona tu depto --"], ...appData.departments.map(d => [d.id, `${d.id} (${d.owner})`])], profile.department);
+    $("prof-name").value = profile.name || "";
+    $("profile-title").textContent = welcome ? "¡Bienvenido al edificio!" : "Identifica tu dispositivo";
+  } else if (id === "modal-provider") fillSelect("prov-category", CATS.slice(0, 3).concat([["Electricista", "Electricista / CFE"], ["Otros", "Otro servicio"]]));
+  icons();
+}
+const closeModal = id => $(id).classList.add("hidden");
+function fillSelect(id, opts, sel) {
+  const s = $(id); s.textContent = "";
+  opts.forEach(([v, t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; if (v === sel) o.selected = true; s.appendChild(o); });
+}
+
+/* ---------- Movimientos ---------- */
+function setTxType(t) {
+  $("tx-type").value = t;
+  const inc = t === "INCOME";
+  $("tab-income").className = "py-2 rounded-lg text-xs font-bold " + (inc ? "bg-white shadow text-indigo-600" : "text-slate-500");
+  $("tab-expense").className = "py-2 rounded-lg text-xs font-bold " + (!inc ? "bg-white shadow text-rose-600" : "text-slate-500");
+  $("block-income").classList.toggle("hidden", !inc); $("block-expense").classList.toggle("hidden", inc);
+  $("tx-resident").required = inc;
+  $("tx-title").textContent = inc ? "Registrar pago de vecino" : "Registrar gasto de servicio";
+}
+function fillResident() { const d = appData.departments.find(x => x.id === $("tx-dept").value); if (d) $("tx-resident").value = d.owner; }
+function fillProviderOptions() {
+  if (!$("tx-category").options.length) fillSelect("tx-category", CATS);
+  const c = $("tx-category").value;
+  const f = appData.providers.filter(p => p.category === c || c === "Otros");
+  fillSelect("tx-provider-select", [["", "-- Contactos guardados --"], ...(f.length ? f : appData.providers).map(p => [p.name, `${p.name} (${p.phone})`])]);
+}
+async function submitTx(e) {
+  e.preventDefault();
+  const type = $("tx-type").value, amount = Math.abs(parseFloat($("tx-amount").value)) || 0;
+  if (!amount) return;
+  const tx = { id: "tx-" + Date.now() + Math.random().toString(36).slice(2, 5), type, amount, date: S($("tx-date").value), notes: S($("tx-notes").value), createdBy: S(author()), deviceId: myDeviceId, department: "", resident: "", category: "", provider: "" };
+  let act;
+  if (type === "INCOME") {
+    Object.assign(tx, { department: S($("tx-dept").value), resident: S($("tx-resident").value), category: "Cuota Ordinaria" });
+    act = mkAct("INCOME", `Cobró cuota de ${money(amount)} a ${tx.department}`);
+  } else {
+    Object.assign(tx, { category: S($("tx-category").value), provider: S($("tx-provider").value) || "Servicio General" });
+    act = mkAct("EXPENSE", `Registró gasto: ${money(amount)} en ${tx.category} (${tx.provider})`);
+  }
+  closeModal("modal-transaction"); e.target.reset();
+  await commit(d => { d.transactions.unshift(tx); pushAct(d, act); }, `Registrar ${type === "INCOME" ? "cuota " + tx.department : "gasto " + tx.category}`);
+}
+async function delTx(id) {
+  const t = appData.transactions.find(x => x.id === id);
+  if (!t || !confirm("¿Eliminar este registro?")) return;
+  const act = mkAct("SYSTEM", `Eliminó el registro de ${money(t.amount)} (${t.type === "INCOME" ? t.department : t.category})`);
+  await commit(d => { d.transactions = d.transactions.filter(x => x.id !== id); pushAct(d, act); }, "Eliminar transacción");
+  renderTx();
+}
+function txRow(t) {
+  const inc = t.type === "INCOME";
+  return `<div class="p-3.5 flex items-center justify-between">
+   <div class="flex items-center gap-3 min-w-0">
+    <div class="p-2 rounded-xl ${inc ? "bg-indigo-50 text-indigo-600" : "bg-rose-50 text-rose-600"}"><i data-lucide="${inc ? "arrow-down-left" : "arrow-up-right"}" class="w-4 h-4"></i></div>
+    <div class="min-w-0"><div class="font-bold text-xs">${esc(inc ? t.department + " • " + t.resident : t.category)}</div>
+     <div class="text-[11px] text-slate-400 flex flex-wrap gap-x-1.5"><span>${esc(t.date)}</span><span>•</span><span>${esc(t.notes || (inc ? "Cuota" : t.provider))}</span><span>•</span><span class="text-indigo-600 font-medium">Por: ${esc(t.createdBy)}</span></div></div>
+   </div>
+   <div class="text-right flex-shrink-0"><div class="font-bold text-xs ${inc ? "text-indigo-600" : "text-rose-600"}">${inc ? "+" : "-"}${money(t.amount)}</div>
+    <button data-a="delTx" data-v="${esc(t.id)}" class="text-[10px] text-slate-400 hover:text-rose-500">Eliminar</button></div>
+  </div>`;
+}
+function renderTx() {
+  const fc = $("filter-category");
+  if (!fc.options.length) fillSelect("filter-category", [["ALL", "Todas las categorías"], ...CATS]);
+  const ty = $("filter-type").value, ca = fc.value;
+  const list = appData.transactions.filter(t => (ty === "ALL" || t.type === ty) && (ca === "ALL" || t.category === ca));
+  $("all-tx").innerHTML = list.length ? list.map(txRow).join("") : `<div class="p-8 text-center text-xs text-slate-400">No se encontraron movimientos.</div>`;
+  icons();
+}
+
+/* ---------- Proveedores ---------- */
+function renderProv() {
+  $("full-providers").innerHTML = appData.providers.map(p => `
+   <div class="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-3">
+    <div><div class="flex justify-between items-start mb-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(p.category)}</span>
+     <button data-a="delProv" data-v="${esc(p.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+     <h3 class="font-bold text-sm">${esc(p.name)}</h3><p class="text-xs text-slate-500">${esc(p.notes || "Sin observaciones")}</p></div>
+    <div class="pt-2 border-t border-slate-100 flex items-center justify-between"><span class="text-xs font-semibold text-slate-700">${esc(p.phone)}</span>
+     <div class="flex gap-1.5">
+       <a href="https://wa.me/52${digits(p.phone)}?text=${encodeURIComponent(`Hola, soy vecino del edificio. Me gustaría solicitar información sobre ${p.category}.`)}" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp</a>
+       <a href="tel:${digits(p.phone)}" class="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-semibold flex items-center gap-1"><i data-lucide="phone" class="w-3.5 h-3.5"></i> Llamar</a>
+      </div></div>
+   </div>`).join("");
+  icons();
+}
+function renderQuick() {
+  const feat = appData.providers.filter(p => p.category === "Agua" || p.category === "Poda y Jardinería");
+  const list = (feat.length ? feat : appData.providers).slice(0, 4);
+  $("quick-providers").innerHTML = list.length ? list.map(p => `
+   <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50">
+    <div class="truncate"><h4 class="text-xs font-bold truncate">${esc(p.name)}</h4><p class="text-[11px] text-slate-500 truncate">${esc(p.notes || p.phone)}</p></div>
+    <div class="flex items-center gap-1.5 ml-2">
+       <a href="https://wa.me/52${digits(p.phone)}?text=${encodeURIComponent(`Hola, soy vecino del edificio. Me gustaría solicitar información sobre ${p.category}.`)}" target="_blank" rel="noopener" class="p-2 rounded-lg bg-emerald-500 text-white border border-emerald-500 text-xs font-semibold" title="WhatsApp"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
+       <a href="tel:${digits(p.phone)}" class="p-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold" title="Llamar"><i data-lucide="phone" class="w-4 h-4"></i></a>
+      </div></div>`).join("")
+    : `<div class="text-xs text-slate-400 col-span-2">Sin proveedores. Agrega uno en el directorio.</div>`;
+}
+async function submitProvider(e) {
+  e.preventDefault();
+  const p = { id: "prov-" + Date.now(), category: S($("prov-category").value), name: S($("prov-name").value.trim()), phone: S($("prov-phone").value.trim()), notes: S($("prov-notes").value.trim()) };
+  if (!p.name || !digits(p.phone)) return;
+  const act = mkAct("CONFIG", `Agregó al directorio: ${p.name} (${p.category})`);
+  closeModal("modal-provider"); e.target.reset();
+  await commit(d => { d.providers.push(p); pushAct(d, act); }, `Agregar proveedor ${p.name}`);
+  renderProv();
+}
+async function delProv(id) {
+  const p = appData.providers.find(x => x.id === id);
+  if (!p || !confirm("¿Eliminar este proveedor?")) return;
+  const act = mkAct("CONFIG", `Eliminó del directorio: ${p.name}`);
+  await commit(d => { d.providers = d.providers.filter(x => x.id !== id); pushAct(d, act); }, `Eliminar proveedor ${p.name}`);
+  renderProv();
+}
+
+/* ---------- Ajustes y departamentos ---------- */
+function loadSettings() {
+  $("gh-owner").value = gh.owner || ""; $("gh-repo").value = gh.repo || ""; $("gh-token").value = gh.token || "";
+  $("set-name").value = appData.buildingName; $("set-fee").value = appData.defaultFee;
+  $("departments").innerHTML = appData.departments.map(d => `
+   <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+    <div><span class="font-bold text-sm">${esc(d.id)}</span><p class="text-xs text-slate-500">${esc(d.owner)}${d.phone ? " • " + esc(d.phone) : ""}</p></div>
+    <button data-a="delDept" data-v="${esc(d.id)}" class="text-slate-400 hover:text-rose-600 p-1.5"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join("");
+  updateProfileUI(); notifSupport(); icons();
+}
+async function saveBuilding() {
+  const name = S($("set-name").value.trim()), fee = Math.max(0, parseFloat($("set-fee").value) || 0);
+  if (!name) return;
+  const act = mkAct("CONFIG", `Actualizó datos a "${name}" (Cuota: ${money(fee)})`);
+  await commit(d => { d.buildingName = name; d.defaultFee = fee; pushAct(d, act); }, "Actualizar datos del edificio");
+  alert("Datos actualizados.");
+}
+async function submitDept(e) {
+  e.preventDefault();
+  const dp = { id: S($("dept-id").value.trim()), owner: S($("dept-owner").value.trim()), phone: S($("dept-phone").value.trim()) };
+  if (!dp.id || !dp.owner) return;
+  const act = mkAct("CONFIG", `Dio de alta el departamento ${dp.id} (${dp.owner})`);
+  closeModal("modal-dept"); e.target.reset();
+  await commit(d => { if (!d.departments.some(x => x.id === dp.id)) d.departments.push(dp); pushAct(d, act); }, `Agregar departamento ${dp.id}`);
+  loadSettings();
+}
+async function delDept(id) {
+  if (!confirm("¿Eliminar este departamento?")) return;
+  const act = mkAct("CONFIG", `Eliminó el departamento ${id}`);
+  await commit(d => { d.departments = d.departments.filter(x => x.id !== id); pushAct(d, act); }, `Eliminar departamento ${id}`);
+  loadSettings();
+}
+
+/* ---------- Perfil ---------- */
+function fillProfileName() { const d = appData.departments.find(x => x.id === $("prof-dept").value); if (d && !$("prof-name").value) $("prof-name").value = d.owner; }
+async function submitProfile(e) {
+  e.preventDefault();
+  const first = !profile.name;
+  profile = { department: S($("prof-dept").value), name: S($("prof-name").value.trim()) };
+  localStorage.setItem("vecinos_user_profile", JSON.stringify(profile));
+  closeModal("modal-profile"); updateProfileUI();
+  if (first) { const act = mkAct("DEVICE", `Nuevo dispositivo vinculado: ${author()}`); await commit(d => pushAct(d, act), `Nuevo dispositivo ${myDeviceId}`); }
+}
+function updateProfileUI() {
+  const first = (profile.name || "").split(" ")[0];
+  $("header-user-name").textContent = profile.name ? (profile.department ? `${profile.department} - ${first}` : first) : "Identificarse";
+  $("settings-identity").textContent = profile.name ? `${profile.name} (${profile.department || "Sin depto"})` : "Sin configurar";
+  $("settings-device").textContent = "ID: " + myDeviceId;
+}
+
+/* ---------- Bitácora ---------- */
+function renderAct() {
+  const ICON = { INCOME: "arrow-down-left", EXPENSE: "arrow-up-right", DEVICE: "smartphone" };
+  $("timeline").innerHTML = appData.activities.length ? appData.activities.map(a => `
+   <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+    <div class="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 flex-shrink-0"><i data-lucide="${ICON[a.type] || "settings"}" class="w-4 h-4"></i></div>
+    <div class="min-w-0"><p class="font-medium text-slate-800">${esc(a.text)}</p><div class="mt-1 text-[11px] text-slate-400"><span class="font-semibold text-slate-600">${esc(a.author)}</span> • ${esc(a.date)} a las ${esc(a.time)}</div></div>
+   </div>`).join("") : `<div class="p-6 text-center text-xs text-slate-400">No hay actividades registradas.</div>`;
+  icons();
+}
+
+/* ---------- Dashboard ---------- */
+function updateUI() {
+  updateProfileUI(); notifSupport();
+  $("header-bldg-name").textContent = appData.buildingName;
+  let inc = 0, exp = 0, ic = 0, ec = 0; const cats = {}, paid = new Set(), month = today().slice(0, 7);
+  appData.transactions.forEach(t => {
+    if (t.type === "INCOME") { inc += t.amount; ic++; if (t.date.startsWith(month)) paid.add(t.department); }
+    else { exp += t.amount; ec++; cats[t.category] = (cats[t.category] || 0) + t.amount; }
+  });
+  const bal = inc - exp;
+  $("total-balance").textContent = money(bal); $("total-income").textContent = money(inc); $("total-expense").textContent = money(exp);
+  $("income-count").textContent = `${ic} cuotas`; $("expense-count").textContent = `${ec} pagos`;
+  const total = appData.departments.length, pc = paid.size, pct = total ? Math.min(100, Math.round(pc / total * 100)) : 0;
+  $("pct").textContent = pct + "%"; $("bar").style.width = pct + "%";
+  $("paid-count").textContent = `${pc} de ${total}`; $("pending-count").textContent = Math.max(0, total - pc);
+  const low = bal <= 1000 && ic > 0;
+  $("low-banner").classList.toggle("hidden", !low);
+  if (low) $("low-text").textContent = `El saldo es de ${money(bal)} MXN. Conviene cobrar cuotas pendientes para la próxima pipa o poda.`;
+  const n = appData.urgentNotice;
+  $("urgent-banner").classList.toggle("hidden", !n);
+  if (n) { $("urgent-text").textContent = n.text; $("urgent-meta").textContent = `Publicado por ${n.author} (${n.date})`; }
+  $("panel-notice").textContent = n ? `"${n.text}" — ${n.author}` : "Sin avisos urgentes.";
+  const unread = appData.activities.filter(a => a.timestamp > lastSeen).length;
+  $("bell-badge").textContent = unread > 9 ? "9+" : unread; $("bell-badge").classList.toggle("hidden", !unread);
+  const l = appData.activities[0];
+  $("dash-last").textContent = l ? `${l.text} por ${l.author} (${l.time})` : "Sin actividades";
+  const r = appData.transactions.slice(0, 5);
+  $("recent-list").innerHTML = r.length ? r.map(txRow).join("") : `<div class="p-6 text-center text-xs text-slate-400">Sin movimientos registrados.</div>`;
+  renderQuick(); renderChart(cats); if ($("view-requests") && !$("view-requests").classList.contains("hidden")) renderRequests(); icons();
+}
+function renderChart(cats) {
+  const labels = Object.keys(cats), cv = $("expenseChart");
+  cv.style.display = labels.length ? "block" : "none"; $("chart-empty").classList.toggle("hidden", !!labels.length);
+  if (chart) chart.destroy();
+  if (!labels.length || !window.Chart) return;
+  chart = new Chart(cv, { type: "doughnut", data: { labels, datasets: [{ data: Object.values(cats), backgroundColor: ["#38bdf8", "#4ade80", "#fbbf24", "#f87171", "#a78bfa", "#94a3b8"], borderWidth: 2, borderColor: "#fff" }] }, options: { cutout: "68%", plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } } });
+}
+
+/* ---------- Exportar CSV (con escape y protección contra fórmulas) ---------- */
+function csvCell(v) {
+  let s = String(v ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function exportCSV() {
+  const rows = [["ID", "Tipo", "Fecha", "Departamento_o_Categoria", "Residente_o_Proveedor", "Monto", "Concepto", "Registrado_Por"]];
+  appData.transactions.forEach(t => rows.push([t.id, t.type, t.date, t.type === "INCOME" ? t.department : t.category, t.type === "INCOME" ? t.resident : t.provider, t.amount, t.notes, t.createdBy]));
+  const blob = new Blob(["\ufeff" + rows.map(r => r.map(csvCell).join(",")).join("\n")], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Cuentas_${appData.buildingName.replace(/[^\w-]+/g, "_")}_${today()}.csv`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- Arranque ---------- */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-a]"); if (!b) return;
+  const fn = { delTx, delProv, delDept }[b.dataset.a]; if (fn) fn(b.dataset.v);
+});
+document.addEventListener("DOMContentLoaded", () => {
+  $("nav").innerHTML = `<div class="nav-inner flex justify-around max-w-4xl mx-auto">` + Object.entries(VIEWS).map(([k, [t, i]]) =>
+    `<button onclick="navTo('${k}')" id="nav-${k}" class="flex flex-col items-center p-1 ${k === "dashboard" ? "text-indigo-600" : "text-slate-400"}"><i data-lucide="${i}" class="w-5 h-5"></i><span class="text-[10px] font-medium mt-0.5">${t}</span></button>`).join("") + `</div>`;
+  readInviteLink(); updateUI(); sync();
+  setInterval(() => { if (!busy) sync(); updateUI(); }, 30000);
+});
+</script>
+</body>
+</html>
